@@ -1,0 +1,22 @@
+{
+  "name": "koishi-plugin-fimtale-api",
+  "description": "Koishi插件，从fimtale搜索/订阅/随机获取小说/解析链接等",
+  "version": "0.0.3",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "homepage": "https://github.com/muyni233/koishi-plugin-fimtale-api",
+  "license": "MIT",
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin",
+    "fiction"
+  ],
+  "peerDependencies": {
+    "koishi": "^4.18.7"
+  }
+}
