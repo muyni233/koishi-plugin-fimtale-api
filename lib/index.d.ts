@@ -1,5 +1,5 @@
 import { Context, Schema } from 'koishi';
-export declare const name = "fimtale-watcher";
+export declare const name = "fimtale-api";
 export declare const inject: string[];
 declare module 'koishi' {
     interface Tables {
