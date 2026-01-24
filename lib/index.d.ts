@@ -23,6 +23,8 @@ export interface Config {
     deviceWidth: number;
     deviceHeight: number;
     fontSize: number;
+    debug: boolean;
+    enableFallback: boolean;
 }
 export declare const Config: Schema<Config>;
 export declare function apply(ctx: Context, config: Config): void;
