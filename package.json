@@ -1,22 +1,37 @@
 {
-  "name": "koishi-plugin-fimtale-api",
-  "description": "Koishi插件，从fimtale搜索/订阅/随机获取小说/解析链接等",
-  "version": "1.1.6",
+  "name": "koishi-plugin-phimg2",
+  "description": "该插件可以让机器人通过Philomena API在使用Philomena搭建的图站上使用标签（tags）搜图",
+  "version": "1.0.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
     "dist"
   ],
-  "homepage": "https://github.com/muyni233/koishi-plugin-fimtale-api",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muyni233/koishi-plugin-phimg2.git"
+  },
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin",
-    "fiction"
+    "plugin"
   ],
   "peerDependencies": {
     "koishi": "^4.18.7"
+  },
+  "dependencies": {
+    "axios": "^1.11.0"
+  },
+  "koishi": {
+    "description": {
+      "zh": "Phimg的Koishi版本，相对于NoneBot版本更新频率会更慢。该插件可以让机器人通过Philomena API在使用Philomena搭建的图站（例如呆站）上使用标签（tags）搜图。"
+    },
+    "service": {
+      "required": [
+        "database"
+      ]
+    }
   }
 }
