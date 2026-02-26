@@ -1,7 +1,3 @@
-import { Context, Schema } from 'koishi';
-export * from './types';
-export declare const name = "fimtale-api";
-export declare const inject: string[];
 export interface Config {
     apiUrl: string;
     apiKey: string;
@@ -15,5 +11,3 @@ export interface Config {
     debug: boolean;
     enableFallback: boolean;
 }
-export declare const Config: Schema<Config>;
-export declare function apply(ctx: Context, config: Config): void;
