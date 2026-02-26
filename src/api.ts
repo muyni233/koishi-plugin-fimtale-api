@@ -248,21 +248,21 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                         else data.WordCount = Math.max(data.WordCount || 0, count);
                     }
 
-                    const favMatch = html.match(/class="favorite-num[^>]*>\s*([0-9,]+)\s*<\//);
+                    const favMatch = html.match(/class="favorite-num[^>]*>\s*([0-9,]+)/);
                     if (favMatch) {
                         const count = parseInt(favMatch[1].replace(/,/g, ''), 10);
                         if (parent) parent.Followers = Math.max(parent.Followers || 0, count);
                         else data.Followers = Math.max(data.Followers || 0, count);
                     }
 
-                    const hpMatch = html.match(/class="high-praise-num[^>]*>\s*([0-9,]+)\s*<\//);
+                    const hpMatch = html.match(/class="high-praise-num[^>]*>\s*([0-9,]+)/);
                     if (hpMatch) {
                         const count = parseInt(hpMatch[1].replace(/,/g, ''), 10);
                         if (parent) parent.HighPraise = Math.max(parent.HighPraise || 0, count);
                         else data.HighPraise = Math.max(data.HighPraise || 0, count);
                     }
 
-                    const downMatch = html.match(/class="downvote-num[^>]*>\s*([0-9,]+)\s*<\//);
+                    const downMatch = html.match(/class="downvote-num[^>]*>\s*([0-9,]+)/);
                     if (downMatch) {
                         const count = parseInt(downMatch[1].replace(/,/g, ''), 10);
                         if (parent) parent.Downvotes = Math.max(parent.Downvotes || 0, count);
@@ -312,54 +312,89 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
     }
 
     const searchThreads = async (keyword: string): Promise<SearchResult[]> => {
-        debugLog(`Starting API search for keyword: "${keyword}"`)
+        debugLog(`Starting web search for keyword: "${keyword}"`)
         try {
-            const url = `${config.apiUrl}/topics`;
-            const params = { APIKey: config.apiKey, APIPass: config.apiPass, Keyword: keyword };
-            const rawRes = await ctx.http.get(url, { params, responseType: 'text' });
-            const idx = rawRes.indexOf('{"Status":');
-            if (idx === -1) return [];
-
-            const res = JSON.parse(rawRes.substring(idx));
-            if (res.Status !== 1 || !res.TopicArray) return [];
+            const searchUrl = `https://fimtale.com/topics?q=${encodeURIComponent(keyword)}`
+            const headers: any = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' };
+            if (config.cookies) headers['Cookie'] = config.cookies;
+            const html = await ctx.http.get(searchUrl, {
+                headers,
+                responseType: 'text'
+            })
 
             const items: SearchResult[] = [];
-            for (const t of res.TopicArray.slice(0, 6)) {
-                // 构建tags
-                const tags: string[] = [];
-                if (t.Tags) {
-                    if (t.Tags.Type) tags.push(t.Tags.Type);
-                    if (t.Tags.Rating && t.Tags.Rating !== 'E') tags.push(t.Tags.Rating);
-                    if (t.Tags.Length) tags.push(t.Tags.Length);
-                    if (t.Tags.OtherTags) tags.push(...t.Tags.OtherTags);
+            const blocks = html.split(/<div[^>]*class="[^"]*card topic-card[^"]*"[^>]*>/).slice(1);
+
+            for (const raw of blocks) {
+                if (items.length >= 6) break;
+
+                const linkMatch = raw.match(/href="\/t\/(\d+)"/);
+                if (!linkMatch) continue;
+                const id = linkMatch[1];
+                if (items.some(i => i.id === id)) continue;
+
+                const titleMatch = raw.match(/class="card-title[^>]*>([\s\S]*?)<\/span>/);
+                const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+
+                const authorMatch = raw.match(/href="\/u\/[^"]+"[^>]*>([\s\S]*?)<\/a>/);
+                const author = authorMatch ? authorMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+
+                const coverMatch = raw.match(/class="card-image[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/);
+                let cover = coverMatch ? coverMatch[1] : undefined;
+                if (cover && cover.includes('avatar') && !cover.includes('upload')) cover = undefined;
+
+                const tags = [];
+                const chipsMatch = raw.match(/<div class="chip[^>]*>[\s\S]*?<\/div>/g);
+                if (chipsMatch) {
+                    for (const chip of chipsMatch) {
+                        const t = chip.replace(/<[^>]+>/g, '').trim();
+                        if (t && !['连载中', '已完结', '已弃坑'].includes(t) && !t.includes('展开')) tags.push(t);
+                    }
                 }
 
-                // 计算更新时间
-                const dt = new Date(t.DateUpdated * 1000);
-                const updateTime = `${dt.getFullYear()}年${dt.getMonth() + 1}月${dt.getDate()}日`;
+                const stats = { views: '0', comments: '0', likes: '0', words: '0', followers: '0' };
+                const extractStat = (pattern: RegExp, suffix: string = '') => {
+                    const m = raw.match(pattern);
+                    return m ? m[1].replace(/,/g, '') + suffix : '0';
+                };
 
-                // 解析likes
-                let likes = t.HighPraise || t.Upvotes || 0;
-                if (!likes && typeof t.rating === 'string' && t.rating.includes('/')) {
-                    likes = parseInt(t.rating.split('/')[0], 10) || 0;
+                // Words can be either Character count (字) or Picture count (幅图)
+                const wordMatch = raw.match(/title="[^"]*字"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
+                if (wordMatch) {
+                    stats.words = wordMatch[1].replace(/,/g, '');
+                } else {
+                    const picMatch = raw.match(/title="[^"]*幅图"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
+                    if (picMatch) stats.words = picMatch[1].replace(/,/g, '') + ' P';
                 }
 
-                items.push({
-                    id: String(t.ID),
-                    title: t.Title,
-                    author: t.UserName,
-                    cover: (t.Background && !t.Background.includes('avatar') && !t.Background.includes('upload')) ? t.Background : undefined,
-                    tags: tags.slice(0, 8),
-                    status: t.Tags?.Status || '',
-                    stats: {
-                        views: String(t.Views || 0),
-                        comments: String(t.Comments || 0),
-                        likes: String(likes),
-                        words: String(t.WordCount || 0),
-                        followers: String(t.Followers || 0)
-                    },
-                    updateTime
-                });
+                stats.views = extractStat(/title="[^"]*阅读"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
+                stats.comments = extractStat(/title="[^"]*评论"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
+
+                // Followers / HP mapping for the Yellow Star in search results
+                stats.followers = extractStat(/title="[^"]*(?:HighPraise|收藏)"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
+
+                // Thumbs up
+                const likesMatch = raw.match(/<div class="left green-text[^>]*>[\s\S]*?<\/i>\s*([\d,]+)/);
+                if (likesMatch) {
+                    stats.likes = likesMatch[1].replace(/,/g, '');
+                } else {
+                    stats.likes = extractStat(/left\s+green-text[^>]*>[\s\S]*?([\d,]+)/);
+                }
+
+                let status = '';
+                const cm = raw.match(/<div class="chip[^>]*>([^<]+)/g);
+                if (cm) {
+                    for (const c of cm) {
+                        const t = c.replace(/<[^>]+>/g, '').trim();
+                        if (['连载中', '已完结', '已弃坑'].includes(t)) status = t;
+                    }
+                }
+
+                let updateTime = '';
+                const tm = raw.match(/(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日)|(\d+\s*(?:小时|分钟|天)前)|(\d{1,2}\s*月\s*\d{1,2}\s*日)/);
+                if (tm) updateTime = tm[0].replace(/\s/g, '');
+
+                items.push({ id, title, author, cover, tags: [...new Set(tags)].slice(0, 8), status, stats, updateTime });
             }
             return items;
         } catch (e) {
