@@ -33,8 +33,15 @@ export function registerCommands(
         try {
             const cardImg = await renderCard(res.data!, res.parent)
             await session.send(h.image(cardImg, 'image/jpeg'))
-            const pages = await renderReadPages(res.data!)
-            const nodes = pages.map(buf => h('message', h.image(buf, 'image/jpeg')))
+            const { pages, extraImages } = await renderReadPages(res.data!)
+            const nodes = pages.map((buf: Buffer) => h('message', h.image(buf, 'image/jpeg')))
+
+            if (extraImages && extraImages.length > 0) {
+                for (const imgUrl of extraImages) {
+                    nodes.push(h('message', h.image(imgUrl))) // 发送原图
+                }
+                nodes.push(h('message', h.text(`以上为本段落包含的 ${extraImages.length} 张原图`)))
+            }
             const navs = []
             const mainId = res.parent ? res.parent.ID : res.data!.ID
             navs.push(`[首页] /ft.read ${mainId}`)

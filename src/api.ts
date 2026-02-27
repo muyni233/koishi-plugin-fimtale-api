@@ -241,7 +241,17 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                     const webUrl = url.replace('/api/v1', '');
                     const html = await ctx.http.get(webUrl, { headers: config.cookies ? { Cookie: config.cookies } : {}, responseType: 'text' })
 
-                    const wordsMatch = html.match(/title="共\s*([0-9,]+)\s*字"/);
+                    const isPicture = html.includes('title="这是一本漫画或画册。"') || html.includes('>图</div>');
+                    if (isPicture) {
+                        data.Tags = data.Tags || {};
+                        data.Tags.Type = '图';
+                        if (parent) {
+                            parent.Tags = parent.Tags || {};
+                            parent.Tags.Type = '图';
+                        }
+                    }
+
+                    const wordsMatch = html.match(/title="共\s*([0-9,]+)\s*(?:字|幅图)"/);
                     if (wordsMatch) {
                         const count = parseInt(wordsMatch[1].replace(/,/g, ''), 10);
                         if (parent) parent.WordCount = Math.max(parent.WordCount || 0, count);
@@ -344,6 +354,17 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                 if (cover && cover.includes('avatar') && !cover.includes('upload')) cover = undefined;
 
                 const tags = [];
+                const mtMatch = raw.match(/<div class="main-tag-set[^>]*>([\s\S]*?)<\/div>\s*<div/);
+                if (mtMatch) {
+                    const mtChips = mtMatch[1].match(/<div[^>]*>([\s\S]*?)<\/div>/g);
+                    if (mtChips) {
+                        for (const c of mtChips) {
+                            const txt = c.replace(/<[^>]+>/g, '').trim();
+                            if (txt) tags.push(txt);
+                        }
+                    }
+                }
+
                 const chipsMatch = raw.match(/<div class="chip[^>]*>[\s\S]*?<\/div>/g);
                 if (chipsMatch) {
                     for (const chip of chipsMatch) {
