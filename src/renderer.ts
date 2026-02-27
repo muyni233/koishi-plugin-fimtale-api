@@ -99,7 +99,8 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
         .header-group { flex-shrink: 0; margin-bottom: 16px; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px; }
         .title { font-size: 24px; font-weight: 700; color: #333; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
         .subtitle { font-size: 16px; color: #78909C; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; border-left: 4px solid #EE6E73; margin-top: 6px; }
-        .author { font-size: 14px; color: #78909C; margin-top: 12px; font-weight: 400; display:flex; align-items:center; }
+        .author { font-size: 14px; color: #78909C; margin-top: 12px; font-weight: 400; display:flex; align-items:center; gap: 6px; }
+        .author-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
         .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
         .tag { background: #eff2f5; color: #5c6b7f; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 500; }
         .summary-box { flex: 1; position: relative; overflow: hidden; min-height: 0; margin-bottom: 16px; }
@@ -126,7 +127,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             </div>
         </div>
         <div class="info">
-          <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">@${info.UserName}</div></div>
+          <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">${info.UserAvatar ? `<img class="author-avatar" src="${info.UserAvatar}"/>` : ''}@${info.UserName}</div></div>
           <div class="tags">${tagsArr.slice(0, 10).map(t => `<span class="tag">${t}</span>`).join('')}</div>
           <div class="summary-box">${isAlbum && hasImages ? `<div class="album-grid">${albumImgs.map(src => `<img src="${src}"/>`).join('')}</div><div class="album-label">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}</div>
           <div class="footer">
@@ -194,7 +195,8 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             height: 100%;
             line-height: 1; margin: 0;
         }
-        .author { font-size: 12px; color: #78909C; }
+        .author { font-size: 12px; color: #78909C; display: flex; align-items: center; gap: 4px; }
+        .author-avatar { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
         .tags { display: flex; gap: 4px; flex-wrap: wrap; height: 18px; overflow: hidden; margin-top: 4px; }
         .tag { background: #f3f3f3; color: #666; padding: 0 5px; border-radius: 3px; font-size: 10px; white-space: nowrap; line-height: 1.6;}
         .meta-row { display: flex; gap: 10px; font-size: 11px; color: #999; margin-top: auto; border-top: 1px dashed #eee; padding-top: 5px; }
@@ -224,7 +226,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                     <div class="id-val">${r.id}</div>
                 </div>
               </div>
-              <div class="author">${typeBadges.join('')}By ${r.author} ${r.status ? ` · ${r.status}` : ''}</div>
+              <div class="author">${r.authorAvatar ? `<img class="author-avatar" src="${r.authorAvatar}"/>` : ''}${typeBadges.join('')}${r.author} ${r.status ? ` · ${r.status}` : ''}</div>
               <div class="tags">${displayTags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
               <div class="meta-row">
                 <span class="stat" style="color:#6ea2d5">${ICONS.views}<span>${r.stats.views}</span></span>
@@ -287,38 +289,39 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
         const html = `<!DOCTYPE html><html><head><style>
         body { margin: 0; padding: 0; width: ${config.deviceWidth}px; height: ${config.deviceHeight}px; background-color: #f6f4ec; color: #2c2c2c; font-family: ${fontSerif}; overflow: hidden; position: relative;}
-        .fixed-header { position: absolute; top: 0; left: 0; width: 100%; height: ${headerHeight}px; border-bottom: 2px solid #EE6E73; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #EE6E73; background: #f6f4ec; z-index: 5; font-weight: bold; }
-        .fixed-footer { position: absolute; bottom: 0; left: 0; width: 100%; height: ${footerHeight}px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #78909C; background: #f6f4ec; z-index: 5; }
+        .fixed-header { position: absolute; top: 0; left: 0; width: 100%; height: ${headerHeight}px; border-bottom: 1.5px solid #EE6E73; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #EE6E73; background: #f6f4ec; z-index: 5; font-weight: 500; letter-spacing: 0.5px; }
+        .fixed-footer { position: absolute; bottom: 0; left: 0; width: 100%; height: ${footerHeight}px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a0978a; background: #f6f4ec; z-index: 5; letter-spacing: 1px; }
         .fixed-header, .fixed-footer, .header-title, .header-author { text-indent: 0 !important; }
 
         #viewport { position: absolute; top: ${marginTop}px; left: ${paddingX}px; width: ${contentWidth}px; height: ${optimalContentHeight}px; overflow: hidden; }
-        #content-scroller { height: 100%; width: 100%; column-width: ${contentWidth}px; column-gap: ${columnGap}px; column-fill: auto; padding: ${paddingY}px 0; box-sizing: border-box; font-size: ${config.fontSize}px; line-height: ${lineHeightRatio}; text-align: left; transform: translateX(0); transition: none; }
+        #content-scroller { height: 100%; width: 100%; column-width: ${contentWidth}px; column-gap: ${columnGap}px; column-fill: auto; padding: ${paddingY}px 0; box-sizing: border-box; font-size: ${config.fontSize}px; line-height: ${lineHeightRatio}; text-align: justify; text-align-last: left; transform: translateX(0); transition: none; }
         
-        p, div { margin: 0 0 0.2em 0; text-indent: 2em; word-wrap: break-word; overflow-wrap: break-word; }
-        .align-center { text-align: center !important; text-align-last: center !important; text-indent: 0 !important; margin: 0.8em 0; font-weight: bold; color: #5d4037; }
-        .align-right { text-align: right !important; text-indent: 0 !important; margin-top: 0.5em; color: #666; font-style: italic; }
+        p, div { margin: 0 0 0.5em 0; text-indent: 2em; word-wrap: break-word; overflow-wrap: break-word; }
+        .align-center { text-align: center !important; text-align-last: center !important; text-indent: 0 !important; margin: 1em 0; font-weight: bold; color: #5d4037; }
+        .align-right { text-align: right !important; text-align-last: right !important; text-indent: 0 !important; margin-top: 0.5em; color: #888; font-style: italic; }
         .no-indent { text-indent: 0 !important; }
         .header-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; min-width: 0; margin-right: 10px; }
-        .header-author { flex-shrink: 0; color: #78909C; max-width: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
-        blockquote { margin: 1em 0.5em; padding-left: 1em; border-left: 4px solid #EE6E73; color: #666; }
+        .header-author { flex-shrink: 0; color: #b0a090; max-width: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+        blockquote { margin: 0.8em 0; padding: 0.5em 1em; border-left: 3px solid #EE6E73; background: rgba(238,110,115,0.04); border-radius: 0 4px 4px 0; color: #6d5e4e; }
         blockquote p { text-indent: 0; margin: 0.3em 0; }
         ul, ol { margin: 0.5em 0; padding-left: 1.5em; }
-        li { margin-bottom: 0.2em; }
-        hr { border: 0; height: 1px; background: #d7ccc8; margin: 1.5em 0; }
+        li { margin-bottom: 0.3em; }
+        hr { border: none; height: auto; background: none; margin: 1.5em 0; text-align: center; text-align-last: center; text-indent: 0; }
+        hr::after { content: "✦  ✦  ✦"; color: #EE6E73; font-size: 12px; letter-spacing: 4px; }
         table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
-        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-        th { background: #eee; font-weight: bold; }
-        pre { background: #eee; padding: 0.5em; overflow-x: auto; border-radius: 4px; margin: 0.5em 0; }
-        code { font-family: monospace; background: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
-        s, strike, del { text-decoration: line-through; color: #888; }
-        u { text-decoration: underline; }
+        th, td { border: 1px solid #d7ccc8; padding: 6px 8px; text-align: left; }
+        th { background: #ede8df; font-weight: bold; color: #5d4037; }
+        pre { background: #ede8df; padding: 0.6em; overflow-x: auto; border-radius: 4px; margin: 0.5em 0; font-size: 0.85em; }
+        code { font-family: 'Consolas', monospace; background: #ede8df; padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
+        s, strike, del { text-decoration: line-through; color: #999; }
+        u { text-decoration: underline; text-decoration-color: #EE6E73; }
         sup, sub { font-size: 0.75em; line-height: 0; position: relative; vertical-align: baseline; }
         sup { top: -0.5em; }
         sub { bottom: -0.25em; }
         a { color: #EE6E73; text-decoration: none; }
-        figure.img-box { display: flex; justify-content: center; align-items: center; margin: 0.5em 0; width: 100%; }
-        img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        h1, h2, h3 { font-size: 1.1em; margin: 0.8em 0; color: #5d4037; text-indent: 0; font-weight: bold; text-align: center; text-align-last: center; break-after: avoid; }
+        figure.img-box { display: flex; justify-content: center; align-items: center; margin: 0.8em 0; width: 100%; }
+        img { max-width: 100%; height: auto; display: block; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        h1, h2, h3 { font-size: 1.1em; margin: 1em 0 0.5em; color: #5d4037; text-indent: 0; font-weight: bold; text-align: center; text-align-last: center; break-after: avoid; }
         strong, b { font-weight: 900; color: #3e2723; }
         em, i { font-style: italic; }
         p:last-child { margin-bottom: 0; }
@@ -363,7 +366,8 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                     await page.evaluate((idx, stepPx, curr, total) => {
                         const offset = -(idx * stepPx);
                         document.getElementById('content-scroller').style.transform = `translateX(${offset}px)`;
-                        document.getElementById('page-indicator').innerText = `- ${curr} / ${total} -`;
+                        const pct = Math.round((curr / total) * 100);
+                        document.getElementById('page-indicator').innerText = `— ${curr} / ${total} —   ${pct}%`;
                     }, i, step, i + 1, finalPages)
                     imgs.push(await page.screenshot({ type: 'jpeg', quality: 100 }) as Buffer)
                 }

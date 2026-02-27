@@ -18,6 +18,7 @@ export interface TopicInfo {
     ID: number
     Title: string
     UserName: string
+    UserAvatar?: string
     Content: string
     DateCreated: number
     Views: number
@@ -49,6 +50,7 @@ export interface SearchResult {
     id: string
     title: string
     author: string
+    authorAvatar?: string
     cover?: string
     tags: string[]
     status: string

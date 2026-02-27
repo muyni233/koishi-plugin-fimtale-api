@@ -70,6 +70,10 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                     userName = clone.textContent?.trim() || '未知作者'
                 }
 
+                let userAvatar = ''
+                const avatarEl = document.querySelector('.option-bar img.circle, .option-bar img[src*="avatar"]') as HTMLImageElement
+                if (avatarEl && avatarEl.src) userAvatar = avatarEl.src
+
                 let content = ''
                 let background = null
                 const passageEl = document.querySelector('.passage')
@@ -127,6 +131,7 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                     ID: parseInt(tid),
                     Title: title,
                     UserName: userName,
+                    UserAvatar: userAvatar,
                     Content: content || '<p>正文提取失败</p>',
                     DateCreated: Date.now(),
                     Views: views,
@@ -278,6 +283,15 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                         if (parent) parent.Downvotes = Math.max(parent.Downvotes || 0, count);
                         else data.Downvotes = Math.max(data.Downvotes || 0, count);
                     }
+
+                    // 提取作者头像
+                    const avatarMatch = html.match(/class="[^"]*circle[^"]*"[^>]*src="([^"]+avatar[^"]+)"/);
+                    if (avatarMatch) {
+                        let avatar = avatarMatch[1];
+                        if (!avatar.startsWith('http')) avatar = 'https://fimtale.com' + avatar;
+                        data.UserAvatar = avatar;
+                        if (parent) parent.UserAvatar = avatar;
+                    }
                 } catch (e) {
                     debugLog(`[API] Supplement True Details failed: ` + e.message)
                 }
@@ -349,6 +363,10 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                 const authorMatch = raw.match(/href="\/u\/[^"]+"[^>]*>([\s\S]*?)<\/a>/);
                 const author = authorMatch ? authorMatch[1].replace(/<[^>]+>/g, '').trim() : '';
 
+                const avatarMatch = raw.match(/<img[^>]*class="[^"]*inline-avatar[^"]*"[^>]*src="([^"]+)"/);
+                let authorAvatar = avatarMatch ? avatarMatch[1] : undefined;
+                if (authorAvatar && !authorAvatar.startsWith('http')) authorAvatar = 'https://fimtale.com' + authorAvatar;
+
                 const coverMatch = raw.match(/class="card-image[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/);
                 let cover = coverMatch ? coverMatch[1] : undefined;
                 if (cover && cover.includes('avatar') && !cover.includes('upload')) cover = undefined;
@@ -415,7 +433,7 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                 const tm = raw.match(/(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日)|(\d+\s*(?:小时|分钟|天)前)|(\d{1,2}\s*月\s*\d{1,2}\s*日)/);
                 if (tm) updateTime = tm[0].replace(/\s/g, '');
 
-                items.push({ id, title, author, cover, tags: [...new Set(tags)].slice(0, 8), status, stats, updateTime });
+                items.push({ id, title, author, authorAvatar, cover, tags: [...new Set(tags)].slice(0, 8), status, stats, updateTime });
             }
             return items;
         } catch (e) {
