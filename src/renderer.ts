@@ -394,13 +394,13 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             await page.setContent(html)
 
             if (config.cardStyle === 'overlay') {
-                await page.evaluate(async () => {
+                await page.evaluate(`(async () => {
                     await document.fonts.ready;
-                    const img = document.getElementById('raw-cover') as HTMLImageElement;
+                    const img = document.getElementById('raw-cover');
                     
-                    const adjustLayout = (image: HTMLImageElement) => {
+                    const adjustLayout = (image) => {
                         const ratio = image.naturalWidth / image.naturalHeight;
-                        const card = document.querySelector('.card') as HTMLElement;
+                        const card = document.querySelector('.card');
                         if (!card) return;
                         if (isFinite(ratio) && ratio > 2.0) {
                             card.classList.add('landscape-cover');
@@ -409,7 +409,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                             const cleanRatio = (isFinite(ratio) && ratio > 0) ? ratio : 0.75;
                             const targetHeight = 620 / cleanRatio;
                             const finalHeight = Math.max(450, Math.min(960, targetHeight));
-                            card.style.height = `${finalHeight}px`;
+                            card.style.height = finalHeight + 'px';
                         }
                     };
 
@@ -427,10 +427,10 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                             });
                         }
                     } else {
-                        const card = document.querySelector('.card') as HTMLElement;
+                        const card = document.querySelector('.card');
                         if (card) card.style.height = '750px';
                     }
-                });
+                })()`);
             }
 
             const viewportHeight = config.cardStyle === 'overlay' ? 1100 : 480;
