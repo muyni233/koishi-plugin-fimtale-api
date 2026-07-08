@@ -106,6 +106,18 @@ export const generateGradient = (str: string) => {
 export const cleanContent = (html: string) => {
     if (!html) return ''
     let processed = html;
+    
+    // Decode escaped HTML inside <collapse> tags first
+    processed = processed.replace(/<collapse>([\s\S]*?)<\/collapse>/gi, (match, content) => {
+        return content
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#(39|039);/g, "'")
+            .replace(/&nbsp;/g, ' ');
+    });
+
     processed = processed.replace(/<div class="right">[\s\S]*?<\/div>/i, '');
     processed = processed.replace(/<div class="title-tags"[\s\S]*?<\/div>/i, '');
     processed = processed.replace(/<p class="status-bar[\s\S]*?<\/p>/i, '');
@@ -122,6 +134,7 @@ export const cleanContent = (html: string) => {
     );
     processed = processed.replace(/<p[^>]*style="[^"]*text-align:\s*right[^"]*"[^>]*>/gi, '<p class="align-right">');
     processed = processed.replace(/<p[^>]*style="[^"]*text-align:\s*center[^"]*"[^>]*>/gi, '<p class="align-center">');
+    processed = processed.replace(/<p[^>]*style="[^"]*text-align:\s*left[^"]*"[^>]*>/gi, '<p class="align-left">');
     processed = processed.replace(/<p[^>]*style="[^"]*text-indent:\s*0[^"]*"[^>]*>/gi, '<p class="no-indent">');
     processed = processed.replace(/<\/?div[^>]*>/gi, '');
     processed = processed.replace(/<blockquote[^>]*>/gi, '<blockquote>');
