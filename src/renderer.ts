@@ -149,7 +149,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
                 .tag-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.92); padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-shadow: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
                 .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.2); padding: 2px 8px 6px 8px; margin: 0 -8px 6px -8px; }
-                .summary-box .summary { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; max-height: 92.4px; }
+                .summary-box .summary { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; max-height: 7.2em; }
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
@@ -355,7 +355,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
             .tag { background: #eff2f5; color: #5c6b7f; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 500; }
             .summary-box { flex: 1; position: relative; overflow: hidden; min-height: 0; margin-bottom: 16px; }
-            .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; max-height: 142.8px; }
+            .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; max-height: 11.0em; }
             .summary p { margin: 0 0 4px 0; text-indent: 2em; }
             .summary p:first-child { margin-top: 0; }
             .summary b, .summary strong { font-weight: bold; color: #455a64; }
