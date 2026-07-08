@@ -10,4 +10,5 @@ export interface Config {
     fontSize: number
     debug: boolean
     enableFallback: boolean
+    proxy?: string
 }

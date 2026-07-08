@@ -5,6 +5,7 @@ import { Config } from './config'
 import { injectCookies } from './utils'
 
 export function createApi(ctx: Context, config: Config, logger: Logger, debugLog: (...args: any[]) => void) {
+    const httpClient = config.proxy ? ctx.http.extend({ proxyAgent: config.proxy } as any) : ctx.http
 
     /** 确保 TopicInfo 的可选字段有默认值 */
     const normalizeTopicInfo = (raw: any): TopicInfo => {
@@ -71,7 +72,7 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                 }
 
                 let userAvatar = ''
-                const avatarEl = document.querySelector('.option-bar img.circle, .option-bar img[src*="avatar"]') as HTMLImageElement
+                const avatarEl = document.querySelector('.option-bar img.user-avatar, .option-bar img.circle, .option-bar img[src*="avatar"]') as HTMLImageElement
                 if (avatarEl && avatarEl.src) userAvatar = avatarEl.src
 
                 let content = ''
@@ -221,7 +222,7 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
             const params = { APIKey: config.apiKey, APIPass: config.apiPass }
             try {
                 debugLog(`[API] Fetching: ${url}`)
-                const rawRes = await ctx.http.get(url, { params, responseType: 'text' })
+                const rawRes = await httpClient.get(url, { params, responseType: 'text' })
 
                 if (!rawRes) return { success: false, msg: 'Empty Response' }
                 if (rawRes.includes('Fatal error') || rawRes.includes('<b>Warning</b>')) {
@@ -243,8 +244,9 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                 // Fimtale的 /t/{id} API 没给出全书总字数，直接以极快速度请求一次无头原版 HTML 获取补充字段
                 const targetId = parent ? parent.ID : data.ID;
                 try {
-                    const webUrl = url.replace('/api/v1', '');
-                    const html = await ctx.http.get(webUrl, { headers: config.cookies ? { Cookie: config.cookies } : {}, responseType: 'text' })
+                    const domain = config.apiUrl.replace('/api/v1', '');
+                    const webUrl = `${domain}/t/${targetId}`;
+                    const html = await httpClient.get(webUrl, { headers: config.cookies ? { Cookie: config.cookies } : {}, responseType: 'text' })
 
                     const isPicture = html.includes('title="这是一本漫画或画册。"') || html.includes('>图</div>');
                     if (isPicture) {
@@ -285,9 +287,30 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
                     }
 
                     // 提取作者头像
-                    const avatarMatch = html.match(/class="[^"]*circle[^"]*"[^>]*src="([^"]+avatar[^"]+)"/);
-                    if (avatarMatch) {
-                        let avatar = avatarMatch[1];
+                    let avatar: string | undefined;
+                    
+                    // 1. 优先从 API 返回的 AuthorInfo 中获取并拼接
+                    const authorInfo = res.AuthorInfo;
+                    if (authorInfo && authorInfo.ID) {
+                        avatar = `https://fimtale.com/upload/avatar/large/${authorInfo.ID}.png`;
+                    }
+                    
+                    // 2. 如果 API 没有返回，则尝试从 HTML 的 option-bar 中提取
+                    if (!avatar) {
+                        const optionBarMatch = html.match(/<div[^>]+class="[^"]*option-bar[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+                        if (optionBarMatch) {
+                            const optionBarHtml = optionBarMatch[1];
+                            const imgMatch = optionBarHtml.match(/<img[^>]+class="[^"]*circle[^"]*"[^>]*>/) || optionBarHtml.match(/<img[^>]+class='[^']*circle[^']*'[^>]*>/);
+                            if (imgMatch) {
+                                const srcMatch = imgMatch[0].match(/src="([^"]+)"/) || imgMatch[0].match(/src='([^']+)'/);
+                                if (srcMatch) {
+                                    avatar = srcMatch[1];
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (avatar) {
                         if (!avatar.startsWith('http')) avatar = 'https://fimtale.com' + avatar;
                         data.UserAvatar = avatar;
                         if (parent) parent.UserAvatar = avatar;
@@ -325,120 +348,86 @@ export function createApi(ctx: Context, config: Config, logger: Logger, debugLog
 
     const fetchRandomId = async () => {
         try {
-            debugLog('Fetching random thread ID...')
-            const headers = config.cookies ? { Cookie: config.cookies } : {}
-            const html = await ctx.http.get('https://fimtale.com/rand', { responseType: 'text', headers })
-            let match = html.match(/FimTale\.topic\.init\((\d+)/) || html.match(/data-clipboard-text=".*?\/t\/(\d+)"/)
-            return match ? match[1] : null
+            debugLog('Fetching random thread ID via API...')
+            const randomPage = Math.floor(Math.random() * 20) + 1
+            const url = `${config.apiUrl}/topics`
+            const params = {
+                APIKey: config.apiKey,
+                APIPass: config.apiPass,
+                page: randomPage
+            }
+            const rawRes = await httpClient.get(url, { params, responseType: 'text' })
+            const idx = rawRes.indexOf('{"Status":')
+            if (idx !== -1) {
+                const res = JSON.parse(rawRes.substring(idx))
+                if (res.Status === 1 && res.TopicArray && res.TopicArray.length > 0) {
+                    const randomTopic = res.TopicArray[Math.floor(Math.random() * res.TopicArray.length)]
+                    return randomTopic.ID.toString()
+                }
+            }
         } catch (e) {
-            return null
+            logger.error('fetchRandomId via API failed:', e)
         }
+        return null
     }
 
     const searchThreads = async (keyword: string): Promise<SearchResult[]> => {
-        debugLog(`Starting web search for keyword: "${keyword}"`)
+        debugLog(`Starting API search for keyword: "${keyword}"`)
         try {
-            const searchUrl = `https://fimtale.com/topics?q=${encodeURIComponent(keyword)}`
-            const headers: any = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' };
-            if (config.cookies) headers['Cookie'] = config.cookies;
-            const html = await ctx.http.get(searchUrl, {
-                headers,
-                responseType: 'text'
-            })
-
-            const items: SearchResult[] = [];
-            const blocks = html.split(/<div[^>]*class="[^"]*card topic-card[^"]*"[^>]*>/).slice(1);
-
-            for (const raw of blocks) {
-                if (items.length >= 6) break;
-
-                const linkMatch = raw.match(/href="\/t\/(\d+)"/);
-                if (!linkMatch) continue;
-                const id = linkMatch[1];
-                if (items.some(i => i.id === id)) continue;
-
-                const titleMatch = raw.match(/class="card-title[^>]*>([\s\S]*?)<\/span>/);
-                const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : '';
-
-                const authorMatch = raw.match(/href="\/u\/[^"]+"[^>]*>([\s\S]*?)<\/a>/);
-                const author = authorMatch ? authorMatch[1].replace(/<[^>]+>/g, '').trim() : '';
-
-                const avatarMatch = raw.match(/<img[^>]*class="[^"]*inline-avatar[^"]*"[^>]*src="([^"]+)"/);
-                let authorAvatar = avatarMatch ? avatarMatch[1] : undefined;
-                if (authorAvatar && !authorAvatar.startsWith('http')) authorAvatar = 'https://fimtale.com' + authorAvatar;
-
-                const coverMatch = raw.match(/class="card-image[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/);
-                let cover = coverMatch ? coverMatch[1] : undefined;
-                if (cover && cover.includes('avatar') && !cover.includes('upload')) cover = undefined;
-
-                const tags = [];
-                const mtMatch = raw.match(/<div class="main-tag-set[^>]*>([\s\S]*?)<\/div>\s*<div/);
-                if (mtMatch) {
-                    const mtChips = mtMatch[1].match(/<div[^>]*>([\s\S]*?)<\/div>/g);
-                    if (mtChips) {
-                        for (const c of mtChips) {
-                            const txt = c.replace(/<[^>]+>/g, '').trim();
-                            if (txt) tags.push(txt);
-                        }
-                    }
-                }
-
-                const chipsMatch = raw.match(/<div class="chip[^>]*>[\s\S]*?<\/div>/g);
-                if (chipsMatch) {
-                    for (const chip of chipsMatch) {
-                        const t = chip.replace(/<[^>]+>/g, '').trim();
-                        if (t && !['连载中', '已完结', '已弃坑'].includes(t) && !t.includes('展开')) tags.push(t);
-                    }
-                }
-
-                const stats = { views: '0', comments: '0', likes: '0', words: '0', followers: '0' };
-                const extractStat = (pattern: RegExp, suffix: string = '') => {
-                    const m = raw.match(pattern);
-                    return m ? m[1].replace(/,/g, '') + suffix : '0';
-                };
-
-                // Words can be either Character count (字) or Picture count (幅图)
-                const wordMatch = raw.match(/title="[^"]*字"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
-                if (wordMatch) {
-                    stats.words = wordMatch[1].replace(/,/g, '');
-                } else {
-                    const picMatch = raw.match(/title="[^"]*幅图"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
-                    if (picMatch) stats.words = picMatch[1].replace(/,/g, '') + ' P';
-                }
-
-                stats.views = extractStat(/title="[^"]*阅读"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
-                stats.comments = extractStat(/title="[^"]*评论"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
-
-                // Followers / HP mapping for the Yellow Star in search results
-                stats.followers = extractStat(/title="[^"]*(?:HighPraise|收藏)"[^>]*>[\s\S]*?>([\d,]+)<\/span>/);
-
-                // Thumbs up
-                const likesMatch = raw.match(/<div class="left green-text[^>]*>[\s\S]*?<\/i>\s*([\d,]+)/);
-                if (likesMatch) {
-                    stats.likes = likesMatch[1].replace(/,/g, '');
-                } else {
-                    stats.likes = extractStat(/left\s+green-text[^>]*>[\s\S]*?([\d,]+)/);
-                }
-
-                let status = '';
-                const cm = raw.match(/<div class="chip[^>]*>([^<]+)/g);
-                if (cm) {
-                    for (const c of cm) {
-                        const t = c.replace(/<[^>]+>/g, '').trim();
-                        if (['连载中', '已完结', '已弃坑'].includes(t)) status = t;
-                    }
-                }
-
-                let updateTime = '';
-                const tm = raw.match(/(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日)|(\d+\s*(?:小时|分钟|天)前)|(\d{1,2}\s*月\s*\d{1,2}\s*日)/);
-                if (tm) updateTime = tm[0].replace(/\s/g, '');
-
-                items.push({ id, title, author, authorAvatar, cover, tags: [...new Set(tags)].slice(0, 8), status, stats, updateTime });
+            const url = `${config.apiUrl}/topics`
+            const params = {
+                APIKey: config.apiKey,
+                APIPass: config.apiPass,
+                q: keyword
             }
-            return items;
+            const rawRes = await httpClient.get(url, { params, responseType: 'text' })
+            const idx = rawRes.indexOf('{"Status":')
+            if (idx === -1) return []
+            
+            const res = JSON.parse(rawRes.substring(idx))
+            if (res.Status !== 1 || !res.TopicArray) return []
+            
+            const items: SearchResult[] = []
+            for (const topic of res.TopicArray) {
+                const tags: string[] = []
+                if (topic.Tags) {
+                    if (topic.Tags.Type) tags.push(topic.Tags.Type)
+                    if (topic.Tags.Rating) tags.push(topic.Tags.Rating)
+                    if (topic.Tags.Status) tags.push(topic.Tags.Status)
+                    if (topic.Tags.OtherTags) tags.push(...topic.Tags.OtherTags)
+                }
+                
+                const authorAvatar = topic.UserID ? `https://fimtale.com/upload/avatar/large/${topic.UserID}.png` : undefined
+                
+                // Format date to local string
+                let updateTime = ''
+                if (topic.DateUpdated) {
+                    const date = new Date(topic.DateUpdated * 1000)
+                    updateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+                }
+                
+                items.push({
+                    id: topic.ID.toString(),
+                    title: topic.Title,
+                    author: topic.UserName,
+                    authorAvatar,
+                    cover: topic.Background || undefined,
+                    tags: [...new Set(tags)].slice(0, 8),
+                    status: topic.Tags?.Status || '',
+                    stats: {
+                        views: (topic.Views || 0).toString(),
+                        comments: (topic.Comments || 0).toString(),
+                        likes: (topic.HighPraise || 0).toString(),
+                        words: (topic.WordCount || 0).toString(),
+                        followers: (topic.Followers || 0).toString(),
+                    },
+                    updateTime
+                })
+            }
+            return items
         } catch (e) {
-            debugLog(`Search fallback failed: ${e.message}`);
-            return [];
+            debugLog(`Search via API failed: ${e.message}`)
+            return []
         }
     }
 

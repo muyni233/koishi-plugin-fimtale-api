@@ -22,6 +22,7 @@ export interface Config {
   fontSize: number
   debug: boolean
   enableFallback: boolean
+  proxy?: string
 }
 
 export const Config: Schema<Config> = Schema.object({
@@ -36,6 +37,7 @@ export const Config: Schema<Config> = Schema.object({
   fontSize: Schema.number().default(20).description('正文字号(px)'),
   debug: Schema.boolean().default(false).description('开启详细调试日志'),
   enableFallback: Schema.boolean().default(true).description('API失败时尝试直接爬取网页(降级策略)'),
+  proxy: Schema.string().description('代理服务器地址 (例: http://127.0.0.1:7890)'),
 })
 
 export function apply(ctx: Context, config: Config) {

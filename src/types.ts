@@ -20,6 +20,7 @@ export interface TopicInfo {
     UserName: string
     UserAvatar?: string
     Content: string
+    Intro?: string
     DateCreated: number
     Views: number
     Comments: number
@@ -41,6 +42,11 @@ export interface TopicInfo {
 export interface ApiResponse {
     Status: number
     TopicInfo?: TopicInfo
+    AuthorInfo?: {
+        ID: number
+        UserName: string
+        Background?: string
+    }
     ParentInfo?: TopicInfo
     Menu?: any[]
     ErrorMessage?: string

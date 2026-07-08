@@ -13,6 +13,24 @@ const ICONS = {
 }
 
 export function createRenderer(ctx: Context, config: Config, logger: Logger, debugLog: (...args: any[]) => void) {
+    const httpClient = config.proxy ? ctx.http.extend({ proxyAgent: config.proxy } as any) : ctx.http
+
+    const fetchImageAsBase64 = async (url: string | undefined): Promise<string | undefined> => {
+        if (!url) return undefined
+        try {
+            debugLog(`[Renderer] Inlining image: ${url}`)
+            const response = await httpClient.get(url, { responseType: 'arraybuffer' })
+            const buffer = Buffer.from(response)
+            let mime = 'image/jpeg'
+            if (url.toLowerCase().endsWith('.png')) mime = 'image/png'
+            else if (url.toLowerCase().endsWith('.gif')) mime = 'image/gif'
+            else if (url.toLowerCase().endsWith('.webp')) mime = 'image/webp'
+            return `data:${mime};base64,${buffer.toString('base64')}`
+        } catch (e) {
+            debugLog(`[Renderer] Failed to inline image ${url}: ${e.message}`)
+            return url
+        }
+    }
 
     const renderCard = async (info: TopicInfo, parent?: TopicInfo) => {
         debugLog(`Rendering Card for ID: ${info.ID}`)
@@ -28,11 +46,10 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
         const displayTagsObj = isChapter && parent ? parent.Tags : info.Tags
         const subTitle = isChapter ? info.Title : null
-        const bgStyle = displayCover ? `background-image: url('${displayCover}');` : `background: ${generateGradient(displayTitle)};`
-
-        let summary = summarizeHtml(info.Content)
+        
+        let summary = summarizeHtml(info.Intro) || summarizeHtml(info.Content)
         if (stripHtml(summary).length < 10 && parent && isChapter) {
-            summary = summarizeHtml(parent.Content)
+            summary = summarizeHtml(parent.Intro) || summarizeHtml(parent.Content)
         }
         if (!stripHtml(summary)) summary = "暂无简介"
 
@@ -58,6 +75,17 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
         }).filter(Boolean)
         const hasImages = currentImgs.length > 0
         const albumImgs = currentImgs.slice(0, 2)
+
+        // Convert images to base64 using proxy client
+        const [base64Cover, base64Avatar, base64AlbumImgs] = await Promise.all([
+            displayCover ? fetchImageAsBase64(displayCover) : Promise.resolve(undefined),
+            info.UserAvatar ? fetchImageAsBase64(info.UserAvatar) : Promise.resolve(undefined),
+            isAlbum && hasImages ? Promise.all(albumImgs.map(src => fetchImageAsBase64(src))) : Promise.resolve([])
+        ])
+
+        const bgStyle = base64Cover
+            ? `background: url('${base64Cover}') center/cover no-repeat, ${generateGradient(displayTitle)};`
+            : `background: ${generateGradient(displayTitle)};`
 
         const html = `<!DOCTYPE html><html><head><style>
         body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
@@ -120,16 +148,16 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
       </style></head><body>
       <div class="card">
         <div class="cover">
-            ${!displayCover ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-size:110px;font-family:'Segoe UI', system-ui, sans-serif;font-weight:800;letter-spacing:-2px;user-select:none;text-shadow:0 4px 15px rgba(0,0,0,0.15);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : ''}
+            ${!base64Cover ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-size:110px;font-family:'Segoe UI', system-ui, sans-serif;font-weight:800;letter-spacing:-2px;user-select:none;text-shadow:0 4px 15px rgba(0,0,0,0.15);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : ''}
             <div class="id-badge-container">
                 <div class="id-label">ID</div>
                 <div class="id-val">${info.ID}</div>
             </div>
         </div>
         <div class="info">
-          <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">${info.UserAvatar ? `<img class="author-avatar" src="${info.UserAvatar}"/>` : ''}@${info.UserName}</div></div>
+          <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">${base64Avatar ? `<img class="author-avatar" src="${base64Avatar}"/>` : ''}@${info.UserName}</div></div>
           <div class="tags">${tagsArr.slice(0, 10).map(t => `<span class="tag">${t}</span>`).join('')}</div>
-          <div class="summary-box">${isAlbum && hasImages ? `<div class="album-grid">${albumImgs.map(src => `<img src="${src}"/>`).join('')}</div><div class="album-label">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}</div>
+          <div class="summary-box">${isAlbum && hasImages ? `<div class="album-grid">${(base64AlbumImgs as string[]).map(src => `<img src="${src}"/>`).join('')}</div><div class="album-label">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}</div>
           <div class="footer">
             <span class="stat" style="color:#6ea2d5">${ICONS.views}<span>${info.Views || 0}</span></span>
             <span class="stat" style="color:#8b6bb5">${ICONS.comments}<span>${info.Comments || 0}</span></span>
@@ -153,6 +181,17 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
     const renderSearchResults = async (keyword: string, results: SearchResult[]) => {
         debugLog(`Rendering search results: ${results.length} items`)
+
+        // Convert all search result covers and avatars to base64 using proxy client
+        const inlinedResults = await Promise.all(results.map(async (r) => {
+            const cover = r.cover ? await fetchImageAsBase64(r.cover) : undefined
+            const authorAvatar = r.authorAvatar ? await fetchImageAsBase64(r.authorAvatar) : undefined
+            return {
+                ...r,
+                cover,
+                authorAvatar
+            }
+        }))
         const html = `<!DOCTYPE html><html><head><style>
         body { margin: 0; padding: 0; font-family: ${fontStack}; width: 500px; background: transparent; }
         .container { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin: 10px; }
@@ -208,7 +247,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
         .type-badge.tb-long { background: #5C6BC0; }
         .type-badge.tb-t { background: #FF7043; }
       </style></head><body><div class="container"><div class="header"><div class="header-title">🔍 "${keyword}"</div><div>Top ${results.length}</div></div><div class="list">
-          ${results.map(r => {
+          ${inlinedResults.map(r => {
             // 类型徽章：图/转/长/T
             const typeBadges: string[] = []
             if (r.tags.includes('图')) typeBadges.push('<span class="type-badge tb-pic">🖼️ 图</span>')
