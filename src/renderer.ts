@@ -402,13 +402,28 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                         const ratio = image.naturalWidth / image.naturalHeight;
                         const card = document.querySelector('.card');
                         if (!card) return;
-                        if (isFinite(ratio) && ratio > 2.0) {
+                        
+                        // Measure content height dynamically
+                        const topRow = document.getElementById('top-row');
+                        const infoBlock = document.querySelector('.info-block');
+                        const divider = document.querySelector('.divider');
+                        const footerWrap = document.querySelector('.footer-wrap');
+                        
+                        const topRowHeight = topRow ? topRow.offsetHeight : 0;
+                        const infoBlockHeight = infoBlock ? infoBlock.offsetHeight : 0;
+                        const dividerHeight = divider ? divider.offsetHeight : 0;
+                        const footerHeight = footerWrap ? footerWrap.offsetHeight : 0;
+                        
+                        const minTextHeight = 28 + Math.max(topRowHeight + 16, 0) + infoBlockHeight + 14 + dividerHeight + 14 + footerHeight + 32;
+                        const scaledImageHeight = 620 / ratio;
+                        
+                        if (isFinite(ratio) && ratio > 1.9 && scaledImageHeight < minTextHeight) {
                             card.classList.add('landscape-cover');
                             card.style.setProperty('--cover-ratio', ratio.toString());
                         } else {
                             const cleanRatio = (isFinite(ratio) && ratio > 0) ? ratio : 0.75;
                             const targetHeight = 620 / cleanRatio;
-                            const finalHeight = Math.max(450, Math.min(960, targetHeight));
+                            const finalHeight = Math.max(minTextHeight, Math.min(960, targetHeight));
                             card.style.height = finalHeight + 'px';
                         }
                     };
