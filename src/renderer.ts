@@ -1,7 +1,9 @@
+import fs from 'fs'
+import path from 'path'
 import { Context, Logger } from 'koishi'
 import { TopicInfo, SearchResult } from './types'
 import { Config } from './config'
-import { stripHtml, summarizeHtml, extractImage, generateGradient, cleanContent, injectCookies, fontStack, fontSerif } from './utils'
+import { stripHtml, summarizeHtml, extractImage, generateGradient, cleanContent, injectCookies, fontStack, fontSerif, fontBrand, fontImport } from './utils'
 
 const ICONS = {
     views: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>',
@@ -34,6 +36,19 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
     const renderCard = async (info: TopicInfo, parent?: TopicInfo) => {
         debugLog(`Rendering Card for ID: ${info.ID}`)
+        
+        // Read logo and encode as base64
+        let base64Logo = ''
+        try {
+            const logoPath = path.resolve(__dirname, '../res/icon2.webp')
+            if (fs.existsSync(logoPath)) {
+                const logoBuffer = fs.readFileSync(logoPath)
+                base64Logo = `data:image/webp;base64,${logoBuffer.toString('base64')}`
+            }
+        } catch (e) {
+            logger.error('Failed to read logo icon2.webp:', e)
+        }
+
         const isChapter = info.IsChapter || (!!parent && parent.ID !== info.ID)
         const displayTitle = isChapter && parent ? parent.Title : info.Title
 
@@ -87,47 +102,81 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             ? `background: url('${base64Cover}') center/cover no-repeat, ${generateGradient(displayTitle)};`
             : `background: ${generateGradient(displayTitle)};`
 
+        // Calculate a matching dark brand color based on the title hash
+        let hash = 0;
+        for (let i = 0; i < (displayTitle || 'default').length; i++) {
+            hash = displayTitle.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const h1 = Math.abs(hash) % 360;
+        const s1 = 15 + (Math.abs(hash) % 15);
+        const darkBgColor = `hsl(${h1}, ${s1}%, 11%)`;
+
+        const wordStatColor = isAlbum ? '#ffe066' : '#ced4da'
+        const splitWordStatColor = isAlbum ? '#e67e22' : '#8f7970'
+        const wordStatIcon = isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words
+        const wordStatText = isAlbum ? `${wordCount} P` : `${wordCount} 字`
+
         let html = ''
         if (config.cardStyle === 'overlay') {
             if (base64Cover) {
                 const cardBgStyle = `background: url('${base64Cover}') center/cover no-repeat;`
                 html = `<!DOCTYPE html><html><head><style>
+                ${fontImport}
                 body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
-                .card { width: 620px; min-height: 440px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: height 0.3s ease; }
-                .mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 45%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.76) 100%); z-index: 1; pointer-events: none; }
-                .container { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 28px; box-sizing: border-box; flex: 1; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
-                #top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-                .id-badge { display: flex; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.25); height: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-                .id-label { background: #EE6E73; color: #fff; padding: 0 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; height: 100%; }
-                .id-val { color: #fff; padding: 0 12px; font-family: "Consolas", monospace; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; }
+                .card { width: 620px; min-height: 440px; border-radius: 22px; box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.04); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: height 0.3s ease; }
+                .card.landscape-cover { height: auto !important; min-height: unset !important; background: ${darkBgColor} !important; gap: 0; }
+                .card.landscape-cover .cover-image-wrapper { position: relative; width: 620px; height: auto; aspect-ratio: var(--cover-ratio); z-index: 0; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); }
+                .card.landscape-cover .cover-image { width: 100%; height: 100%; object-fit: cover; }
+                .card.landscape-cover .container { padding: 24px 32px 28px 32px; }
+                .cover-image-wrapper { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+                .cover-image { width: 100%; height: 100%; object-fit: cover; }
+                .mask { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 45%, rgba(0,0,0,0.1) 62%, rgba(0,0,0,0.28) 78%, rgba(0,0,0,0.52) 90%, rgba(0,0,0,0.68) 100%); }
+                .card.landscape-cover .mask { display: none; }
+                .noise { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.04; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px 128px; }
+                .container { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: space-between; padding: 28px 32px; box-sizing: border-box; flex: 1; color: #fff; }
+                #top-row { position: absolute; top: 28px; left: 32px; right: 32px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+                .brand-wrap { display: flex; align-items: center; gap: 6px; }
+                .logo { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
+                .brand-name { font-family: ${fontBrand}; font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: rgba(255,255,255,0.95); text-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+                .id-badge { display: flex; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.06); height: 28px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12); }
+                .id-label { background: linear-gradient(135deg, #EE6E73, #e85d62); color: #fff; padding: 0 8px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; height: 100%; letter-spacing: 0.5px; }
+                .id-val { color: #fff; padding: 0 10px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; }
                 .info-block { display: flex; flex-direction: column; flex-grow: 1; justify-content: flex-end; margin-bottom: 12px; }
-                .title { font-size: 26px; font-weight: 800; line-height: 1.35; color: #ffffff; margin: 0 0 6px 0; text-shadow: 0 2px 12px rgba(0,0,0,0.6); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.3px; }
-                .subtitle { font-size: 16px; color: rgba(255, 255, 255, 0.85); font-weight: 500; margin: 4px 0 10px 0; padding-left: 12px; border-left: 4px solid #EE6E73; text-shadow: 0 1px 6px rgba(0,0,0,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9); }
+                .title { font-size: 26px; font-weight: 800; line-height: 1.35; color: #ffffff; margin: -4px -10px 2px -10px; padding: 4px 10px 8px 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.45); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.3px; }
+                .subtitle { font-size: 16px; color: rgba(255, 255, 255, 0.85); font-weight: 500; margin: 4px -8px 4px 0; padding: 0 8px 6px 12px; border-left: 4px solid #EE6E73; text-shadow: 0 2px 6px rgba(0,0,0,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9); text-shadow: 0 1px 4px rgba(0,0,0,0.25); }
                 .author-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.6); object-fit: cover; }
                 .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-                .tag-pill { background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(255,255,255,0.95); padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; text-shadow: none; }
-                .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
+                .tag-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.92); padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-shadow: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+                .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.2); padding: 2px 8px 6px 8px; margin: 0 -8px 6px -8px; }
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
-                .divider { height: 1px; background: rgba(255, 255, 255, 0.2); margin-bottom: 12px; }
+                .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
+                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
                 .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
-                .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+                .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
+                .corner-tl, .corner-br { position: absolute; width: 24px; height: 24px; z-index: 10; pointer-events: none; }
+                .corner-tl { top: 16px; left: 20px; border-top: 1.5px solid rgba(255,255,255,0.12); border-left: 1.5px solid rgba(255,255,255,0.12); }
+                .corner-br { bottom: 16px; right: 20px; border-bottom: 1.5px solid rgba(255,255,255,0.12); border-right: 1.5px solid rgba(255,255,255,0.12); }
                 </style></head><body>
-                <div class="card" style="${cardBgStyle}">
-                    <div style="position: absolute; top: 14px; left: 18px; font-size: 10px; font-family: monospace; color: rgba(255,255,255,0.15); pointer-events: none; z-index: 10;">+</div>
-                    <div style="position: absolute; bottom: 14px; right: 18px; font-size: 10px; font-family: monospace; color: rgba(255,255,255,0.15); pointer-events: none; z-index: 10;">+</div>
-                    <div class="mask"></div>
-                    <div class="container">
-                        <div id="top-row">
-                            <div style="font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,0.45); font-family: monospace; text-transform: uppercase; font-weight: 600;">FIMTALE</div>
-                            <div class="id-badge">
-                                <div class="id-label">ID</div>
-                                <div class="id-val">${info.ID}</div>
-                            </div>
+                <div class="card" style="--cover-url: url('${base64Cover}'); ${cardBgStyle}">
+                    <div class="corner-tl"></div>
+                    <div class="corner-br"></div>
+                    ${base64Cover ? `<div class="cover-image-wrapper"><img class="cover-image" src="${base64Cover}" /></div>` : ''}
+                    ${base64Cover ? `<div class="mask"></div>` : ''}
+                    <div class="noise"></div>
+                    <div id="top-row">
+                        <div class="brand-wrap">
+                            ${base64Logo ? `<img class="logo" src="${base64Logo}" />` : ''}
+                            <span class="brand-name">FimTale</span>
                         </div>
-                        
+                        <div class="id-badge">
+                            <div class="id-label">ID</div>
+                            <div class="id-val">${info.ID}</div>
+                        </div>
+                    </div>
+                    <div class="container">
                         <div class="info-block">
                             <div class="title">${displayTitle}</div>
                             ${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}
@@ -145,13 +194,15 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
                         <div class="divider"></div>
 
-                        <div class="footer">
-                            <span class="stat" style="color:#a5d8ff">${ICONS.views}<span>${info.Views || 0}</span></span>
-                            <span class="stat" style="color:#d0bfff">${ICONS.comments}<span>${info.Comments || 0}</span></span>
-                            <span class="stat" style="color:#b2f2bb">${ICONS.likes}<span>${likes}</span></span>
-                            <span class="stat" style="color:#ffc9c9">${ICONS.followers}<span>${followers}</span></span>
-                            <span class="stat" style="color:#ffec99">${ICONS.hp}<span>${highPraise}</span></span>
-                            <span class="stat" style="color:#e9ecef">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
+                        <div class="footer-wrap">
+                            <div class="footer">
+                                <span class="stat" style="color:#a5d8ff">${ICONS.views}<span>${info.Views || 0}</span></span>
+                                <span class="stat" style="color:#d0bfff">${ICONS.comments}<span>${info.Comments || 0}</span></span>
+                                <span class="stat" style="color:#b2f2bb">${ICONS.likes}<span>${likes}</span></span>
+                                <span class="stat" style="color:#ffc9c9">${ICONS.followers}<span>${followers}</span></span>
+                                <span class="stat" style="color:#ffec99">${ICONS.hp}<span>${highPraise}</span></span>
+                                <span class="stat" style="color:${wordStatColor}">${wordStatIcon}<span>${wordStatText}</span></span>
+                            </div>
                         </div>
                     </div>
                     <img id="raw-cover" src="${base64Cover}" style="display: none;" />
@@ -160,14 +211,19 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             } else {
                 const cardBgStyle = `background: ${generateGradient(displayTitle)};`
                 html = `<!DOCTYPE html><html><head><style>
+                ${fontImport}
                 body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
-                .card { width: 620px; height: 750px; border-radius: 24px; box-shadow: 0 25px 60px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-                .mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 100% 100%, rgba(238, 110, 115, 0.08) 0%, rgba(0, 0, 0, 0) 50%), radial-gradient(circle at 0% 0%, rgba(110, 162, 213, 0.06) 0%, rgba(0, 0, 0, 0) 40%); z-index: 1; pointer-events: none; }
-                .container { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 44px; box-sizing: border-box; flex: 1; color: #fff; }
+                .card { width: 620px; height: 750px; border-radius: 24px; box-shadow: 0 25px 64px rgba(0,0,0,0.4), 0 10px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+                .mask { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(circle at 100% 100%, rgba(238,110,115,0.1) 0%, transparent 45%), radial-gradient(circle at 0% 0%, rgba(110,162,213,0.08) 0%, transparent 35%); }
+                .noise { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.06; mix-blend-mode: soft-light; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px 128px; }
+                .geo-circle { position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.06); z-index: 1; pointer-events: none; }
+                .geo-circle-2 { position: absolute; bottom: 80px; left: -40px; width: 140px; height: 140px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.04); z-index: 1; pointer-events: none; }
+                .geo-line { position: absolute; top: 180px; right: 50px; width: 80px; height: 1px; background: rgba(255,255,255,0.06); transform: rotate(-45deg); z-index: 1; pointer-events: none; }
+                .container { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: space-between; padding: 44px; box-sizing: border-box; flex: 1; color: #fff; }
                 
                 .header-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-                .id-tag { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.45); letter-spacing: 2px; text-transform: uppercase; font-family: monospace; }
-                .status-tag { font-size: 10px; font-weight: 800; color: #EE6E73; background: rgba(238, 110, 115, 0.15); border: 1px solid rgba(238, 110, 115, 0.25); padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; }
+                .id-tag { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.45); letter-spacing: 2px; text-transform: uppercase; font-family: ${fontBrand}; }
+                .status-tag { font-size: 10px; font-weight: 800; color: #EE6E73; background: rgba(238,110,115,0.12); border: 1px solid rgba(238,110,115,0.2); padding: 3px 10px; border-radius: 6px; letter-spacing: 1px; text-transform: uppercase; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
                 
                 .title { font-size: 32px; font-weight: 900; line-height: 1.35; color: #ffffff; margin: 0 0 8px 0; letter-spacing: -0.5px; }
                 .subtitle { font-size: 18px; color: rgba(255, 255, 255, 0.55); font-weight: 500; margin: 0 0 24px 0; line-height: 1.4; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 12px; }
@@ -177,37 +233,40 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .author-name { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.9); }
                 
                 .tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-                .tag-pill { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+                .tag-pill { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
                 
-                .summary-box { font-size: 15px; line-height: 1.85; color: rgba(255, 255, 255, 0.72); text-align: justify; display: -webkit-box; -webkit-line-clamp: 11; -webkit-box-orient: vertical; overflow: hidden; border-left: 3px solid #EE6E73; padding-left: 20px; margin: 12px 0; }
+                .summary-box { font-size: 15px; line-height: 1.85; color: rgba(255,255,255,0.88); text-align: justify; display: -webkit-box; -webkit-line-clamp: 9; -webkit-box-orient: vertical; overflow: hidden; margin: 12px 0; background: rgba(255,255,255,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 14px; padding: 22px 24px; border: 1px solid rgba(255,255,255,0.08); border-left: 3px solid rgba(238,110,115,0.5); }
                 .summary-box p { margin: 0 0 10px 0; text-indent: 0; }
                 .summary-box p:last-child { margin-bottom: 0; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 
-                .divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin-bottom: 20px; }
+                .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.08) 15%, rgba(255,255,255,0.08) 85%, transparent); margin-bottom: 20px; }
+                .footer-wrap { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.45); font-weight: 600; }
                 .stats-group { display: flex; gap: 14px; }
                 .stat { display: flex; align-items: center; gap: 4px; }
                 .stat svg { width: 15px; height: 15px; fill: currentColor; }
                 </style></head><body>
                 <div class="card" style="${cardBgStyle}">
-                    <div style="position: absolute; top: 14px; left: 18px; font-size: 10px; font-family: monospace; color: rgba(255,255,255,0.15); pointer-events: none; z-index: 10;">+</div>
-                    <div style="position: absolute; bottom: 14px; right: 18px; font-size: 10px; font-family: monospace; color: rgba(255,255,255,0.15); pointer-events: none; z-index: 10;">+</div>
+                    <div class="geo-circle"></div>
+                    <div class="geo-circle-2"></div>
+                    <div class="geo-line"></div>
                     <div class="mask"></div>
+                    <div class="noise"></div>
                     <div class="container">
                         <div>
                             <div class="header-meta">
                                 <span class="id-tag" style="display: flex; align-items: center; gap: 8px;">
                                     <span>FIMTALE</span>
                                     <span style="opacity: 0.35;">/</span>
-                                    <span style="font-family: monospace; opacity: 0.7;">ID-${info.ID}</span>
+                                    <span style="font-family: ${fontBrand}; opacity: 0.7;">ID-${info.ID}</span>
                                 </span>
                                 <span class="status-tag">${isAlbum ? 'ALBUM' : 'NOVEL'}</span>
                             </div>
                             
                             <div class="title">${displayTitle}</div>
                             ${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}
-                            <div style="width: 28px; height: 2px; background: #EE6E73; margin-bottom: 20px; border-radius: 1px;"></div>
+                            <div style="width: 32px; height: 2.5px; background: linear-gradient(to right, #EE6E73, rgba(238,110,115,0.3)); margin-bottom: 22px; border-radius: 2px;"></div>
                             
                             <div class="author-row">
                                 ${base64Avatar ? `<img class="author-avatar" src="${base64Avatar}"/>` : ''}
@@ -225,17 +284,19 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
 
                         <div>
                             <div class="divider"></div>
-                            <div class="footer">
-                                <div class="stats-group">
-                                    <span class="stat" style="color:#a5d8ff">${ICONS.views}<span>${info.Views || 0}</span></span>
-                                    <span class="stat" style="color:#d0bfff">${ICONS.comments}<span>${info.Comments || 0}</span></span>
-                                    <span class="stat" style="color:#b2f2bb">${ICONS.likes}<span>${likes}</span></span>
-                                    <span class="stat" style="color:#ffc9c9">${ICONS.followers}<span>${followers}</span></span>
-                                    <span class="stat" style="color:#ffec99">${ICONS.hp}<span>${highPraise}</span></span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,0.3); font-family: monospace;">FIMTALE // ARCHIVE</span>
-                                    <span class="stat" style="color:#e9ecef">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
+                            <div class="footer-wrap">
+                                <div class="footer">
+                                    <div class="stats-group">
+                                        <span class="stat" style="color:#a5d8ff">${ICONS.views}<span>${info.Views || 0}</span></span>
+                                        <span class="stat" style="color:#d0bfff">${ICONS.comments}<span>${info.Comments || 0}</span></span>
+                                        <span class="stat" style="color:#b2f2bb">${ICONS.likes}<span>${likes}</span></span>
+                                        <span class="stat" style="color:#ffc9c9">${ICONS.followers}<span>${followers}</span></span>
+                                        <span class="stat" style="color:#ffec99">${ICONS.hp}<span>${highPraise}</span></span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,0.25); font-family: ${fontBrand};">FIMTALE // ARCHIVE</span>
+                                        <span class="stat" style="color:${wordStatColor}">${wordStatIcon}<span>${wordStatText}</span></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -246,6 +307,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
         } else {
             // Split style (original)
             html = `<!DOCTYPE html><html><head><style>
+            ${fontImport}
             body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
             .card { width: 620px; min-height: 420px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; overflow: hidden; }
             .cover { width: 220px; min-height: 100%; ${bgStyle} background-size: cover; background-position: center; position: relative; flex-shrink: 0; }
@@ -274,7 +336,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 background: #fff;
                 color: #EE6E73;
                 padding: 0 12px;
-                font-family: "Consolas", "Monaco", monospace;
+                font-family: ${fontBrand};
                 font-size: 15px;
                 font-weight: 900;
                 display: flex; align-items: center; justify-content: center;
@@ -322,7 +384,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                     <span class="stat" style="color:#72ae76">${ICONS.likes}<span>${likes}</span></span>
                     <span class="stat" style="color:#5c9ec8">${ICONS.followers}<span>${followers}</span></span>
                     <span class="stat" style="color:#d4a24d">${ICONS.hp}<span>${highPraise}</span></span>
-                    <span class="stat" style="color:#8f7970">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
+                    <span class="stat" style="color:${splitWordStatColor}">${wordStatIcon}<span>${wordStatText}</span></span>
                   </div></div></div></body></html>`
         }
 
@@ -340,9 +402,15 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                         const ratio = image.naturalWidth / image.naturalHeight;
                         const card = document.querySelector('.card') as HTMLElement;
                         if (!card) return;
-                        const targetHeight = 620 / ratio;
-                        const finalHeight = Math.max(380, Math.min(800, targetHeight));
-                        card.style.height = `${finalHeight}px`;
+                        if (isFinite(ratio) && ratio > 2.0) {
+                            card.classList.add('landscape-cover');
+                            card.style.setProperty('--cover-ratio', ratio.toString());
+                        } else {
+                            const cleanRatio = (isFinite(ratio) && ratio > 0) ? ratio : 0.75;
+                            const targetHeight = 620 / cleanRatio;
+                            const finalHeight = Math.max(450, Math.min(960, targetHeight));
+                            card.style.height = `${finalHeight}px`;
+                        }
                     };
 
                     if (img) {
@@ -365,7 +433,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 });
             }
 
-            const viewportHeight = config.cardStyle === 'overlay' ? 900 : 480;
+            const viewportHeight = config.cardStyle === 'overlay' ? 1100 : 480;
             await page.setViewport({ width: 660, height: viewportHeight, deviceScaleFactor: 3 })
             const img = await page.$('.card').then(e => e.screenshot({ type: 'jpeg', quality: 100 }))
             return img

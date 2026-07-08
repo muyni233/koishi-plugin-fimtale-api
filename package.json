@@ -1,12 +1,13 @@
 {
   "name": "koishi-plugin-fimtale-api",
   "description": "Koishi插件，从fimtale搜索/订阅/随机获取小说/解析链接等",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "res"
   ],
   "homepage": "https://github.com/muyni233/koishi-plugin-fimtale-api",
   "license": "MIT",

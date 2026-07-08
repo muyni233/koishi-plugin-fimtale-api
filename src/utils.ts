@@ -3,6 +3,9 @@ import { Page } from 'puppeteer-core'
 
 export const fontStack = '"Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
 export const fontSerif = '"Noto Serif SC", "Source Han Serif SC", "SimSun", serif'
+export const fontBrand = '"JetBrains Mono", "Consolas", "Monaco", monospace'
+export const fontImport = '@import url("https://fonts.loli.net/css2?family=JetBrains+Mono:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap");'
+
 
 export const stripHtml = (html: string | null | undefined) => {
     if (!html) return ''
