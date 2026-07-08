@@ -123,7 +123,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 html = `<!DOCTYPE html><html><head><style>
                 ${fontImport}
                 body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
-                .card { width: 620px; min-height: 440px; border-radius: 22px; box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.04); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: height 0.3s ease; }
+                .card { width: 620px; min-height: 250px; border-radius: 22px; box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.04); display: flex; flex-direction: column; overflow: hidden; position: relative; }
                 .card.landscape-cover { height: auto !important; min-height: unset !important; background: ${darkBgColor} !important; gap: 0; }
                 .card.landscape-cover .cover-image-wrapper { position: relative; width: 620px; height: auto; aspect-ratio: var(--cover-ratio); z-index: 0; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); }
                 .card.landscape-cover .cover-image { width: 100%; height: 100%; object-fit: cover; }
@@ -138,9 +138,9 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .brand-wrap { display: flex; align-items: center; gap: 6px; }
                 .logo { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
                 .brand-name { font-family: ${fontBrand}; font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: rgba(255,255,255,0.95); text-shadow: 0 2px 6px rgba(0,0,0,0.35); }
-                .id-badge { display: flex; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.06); height: 28px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12); }
-                .id-label { background: linear-gradient(135deg, #EE6E73, #e85d62); color: #fff; padding: 0 8px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; height: 100%; letter-spacing: 0.5px; }
-                .id-val { color: #fff; padding: 0 10px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; }
+                .id-badge { display: flex; border-radius: 8px; overflow: hidden; height: 28px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); }
+                .id-label { background: linear-gradient(135deg, #EE6E73, #e85d62); color: #fff; padding: 0 6px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
+                .id-val { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #EE6E73; padding: 0 10px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
                 .info-block { display: flex; flex-direction: column; flex-grow: 1; justify-content: flex-end; margin-bottom: 12px; }
                 .title { font-size: 26px; font-weight: 800; line-height: 1.35; color: #ffffff; margin: -4px -10px 2px -10px; padding: 4px 10px 8px 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.45); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.3px; }
                 .subtitle { font-size: 16px; color: rgba(255, 255, 255, 0.85); font-weight: 500; margin: 4px -8px 4px 0; padding: 0 8px 6px 12px; border-left: 4px solid #EE6E73; text-shadow: 0 2px 6px rgba(0,0,0,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -152,7 +152,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
-                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); }
+                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
                 .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
                 .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
@@ -172,7 +172,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                             <span class="brand-name">FimTale</span>
                         </div>
                         <div class="id-badge">
-                            <div class="id-label">ID</div>
+                            <div class="id-label">#</div>
                             <div class="id-val">${info.ID}</div>
                         </div>
                     </div>
@@ -241,7 +241,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.08) 15%, rgba(255,255,255,0.08) 85%, transparent); margin-bottom: 20px; }
-                .footer-wrap { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); }
+                .footer-wrap { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.45); font-weight: 600; }
                 .stats-group { display: flex; gap: 14px; }
                 .stat { display: flex; align-items: center; gap: 4px; }
@@ -259,7 +259,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                                 <span class="id-tag" style="display: flex; align-items: center; gap: 8px;">
                                     <span>FIMTALE</span>
                                     <span style="opacity: 0.35;">/</span>
-                                    <span style="font-family: ${fontBrand}; opacity: 0.7;">ID-${info.ID}</span>
+                                    <span style="font-family: ${fontBrand}; opacity: 0.7;">#${info.ID}</span>
                                 </span>
                                 <span class="status-tag">${isAlbum ? 'ALBUM' : 'NOVEL'}</span>
                             </div>
@@ -324,21 +324,26 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 background: #EE6E73;
                 color: #fff;
                 padding: 0 10px;
-                font-size: 12px;
-                font-weight: bold;
-                font-family: sans-serif;
-                text-transform: uppercase;
+                border-top-left-radius: 6px;
+                border-bottom-left-radius: 6px;
+                font-family: ${fontBrand};
+                font-size: 13px;
+                font-weight: 800;
                 display: flex; align-items: center; justify-content: center;
                 height: 100%;
                 line-height: 1; margin: 0;
             }
             .id-val {
-                background: #fff;
+                background: rgba(255,255,255,0.82);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 color: #EE6E73;
                 padding: 0 12px;
+                border-top-right-radius: 6px;
+                border-bottom-right-radius: 6px;
                 font-family: ${fontBrand};
-                font-size: 15px;
-                font-weight: 900;
+                font-size: 13px;
+                font-weight: 800;
                 display: flex; align-items: center; justify-content: center;
                 height: 100%;
                 line-height: 1; margin: 0;
@@ -370,7 +375,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 <div class="cover">
                     ${!base64Cover ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-size:110px;font-family:'Segoe UI', system-ui, sans-serif;font-weight:800;letter-spacing:-2px;user-select:none;text-shadow:0 4px 15px rgba(0,0,0,0.15);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : ''}
                     <div class="id-badge-container">
-                        <div class="id-label">ID</div>
+                        <div class="id-label">#</div>
                         <div class="id-val">${info.ID}</div>
                     </div>
                 </div>
@@ -417,7 +422,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                         const minTextHeight = 28 + Math.max(topRowHeight + 16, 0) + infoBlockHeight + 14 + dividerHeight + 14 + footerHeight + 32;
                         const scaledImageHeight = 620 / ratio;
                         
-                        if (isFinite(ratio) && ratio > 1.9 && scaledImageHeight < minTextHeight) {
+                        if (isFinite(ratio) && ratio > 1.0 && scaledImageHeight < minTextHeight) {
                             card.classList.add('landscape-cover');
                             card.style.setProperty('--cover-ratio', ratio.toString());
                         } else {
@@ -494,8 +499,8 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             background: #EE6E73;
             color: #fff;
             padding: 0 4px;
-            font-family: sans-serif;
-            font-size: 10px;
+            font-family: ${fontBrand};
+            font-size: 11px;
             font-weight: bold;
             display: flex; align-items: center; justify-content: center;
             height: 100%;
@@ -505,7 +510,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             background: #fff;
             color: #EE6E73;
             padding: 0 6px;
-            font-family: "Consolas", monospace;
+            font-family: ${fontBrand};
             font-size: 11px;
             font-weight: bold;
             display: flex; align-items: center; justify-content: center;
@@ -539,7 +544,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             return `<div class="item"><div class="cover-box">${bg}</div><div class="content">
               <div class="top-row"><div class="title">${r.title}</div>
                 <div class="id-badge">
-                    <div class="id-label">ID</div>
+                    <div class="id-label">#</div>
                     <div class="id-val">${r.id}</div>
                 </div>
               </div>
