@@ -138,9 +138,9 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .brand-wrap { display: flex; align-items: center; gap: 6px; }
                 .logo { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
                 .brand-name { font-family: ${fontBrand}; font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: rgba(255,255,255,0.95); text-shadow: 0 2px 6px rgba(0,0,0,0.35); }
-                .id-badge { display: flex; border-radius: 8px; overflow: hidden; height: 28px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); }
-                .id-label { background: linear-gradient(135deg, #EE6E73, #e85d62); color: #fff; padding: 0 6px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
-                .id-val { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #EE6E73; padding: 0 10px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; font-family: ${fontBrand}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
+                .id-badge { display: flex; border-radius: 6px; overflow: hidden; height: 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); transform: translateZ(0); -webkit-mask-image: -webkit-radial-gradient(white, black); }
+                .id-label { background: linear-gradient(135deg, rgba(238,110,115,0.95), rgba(232,93,98,0.95)); color: #fff; padding: 0 6px; font-family: ${fontBrand}; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
+                .id-val { background: rgba(255,255,255,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: rgba(238,110,115,0.95); padding: 0 8px; font-family: ${fontBrand}; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; }
                 .info-block { display: flex; flex-direction: column; flex-grow: 1; justify-content: flex-end; margin-bottom: 12px; }
                 .title { font-size: 26px; font-weight: 800; line-height: 1.35; color: #ffffff; margin: -4px -10px 2px -10px; padding: 4px 10px 8px 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.45); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.3px; }
                 .subtitle { font-size: 16px; color: rgba(255, 255, 255, 0.85); font-weight: 500; margin: 4px -8px 4px 0; padding: 0 8px 6px 12px; border-left: 4px solid #EE6E73; text-shadow: 0 2px 6px rgba(0,0,0,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -148,7 +148,8 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .author-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.6); object-fit: cover; }
                 .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
                 .tag-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.92); padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-shadow: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
-                .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.2); padding: 2px 8px 6px 8px; margin: 0 -8px 6px -8px; }
+                .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.2); padding: 2px 8px 6px 8px; margin: 0 -8px 6px -8px; }
+                .summary-box .summary { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; max-height: 92.4px; }
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
@@ -314,35 +315,32 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             .id-badge-container {
                 position: absolute; top: 15px; left: 15px;
                 display: flex;
-                box-shadow: 0 4px 12px rgba(238,110,115, 0.3);
                 border-radius: 6px;
                 overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.3);
-                height: 28px;
+                height: 24px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                transform: translateZ(0);
+                -webkit-mask-image: -webkit-radial-gradient(white, black);
             }
             .id-label {
-                background: #EE6E73;
+                background: linear-gradient(135deg, rgba(238,110,115,0.95), rgba(232,93,98,0.95));
                 color: #fff;
-                padding: 0 10px;
-                border-top-left-radius: 6px;
-                border-bottom-left-radius: 6px;
+                padding: 0 6px;
                 font-family: ${fontBrand};
-                font-size: 13px;
+                font-size: 11.5px;
                 font-weight: 800;
                 display: flex; align-items: center; justify-content: center;
                 height: 100%;
                 line-height: 1; margin: 0;
             }
             .id-val {
-                background: rgba(255,255,255,0.82);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                color: #EE6E73;
-                padding: 0 12px;
-                border-top-right-radius: 6px;
-                border-bottom-right-radius: 6px;
+                background: rgba(255,255,255,0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                color: rgba(238,110,115,0.95);
+                padding: 0 8px;
                 font-family: ${fontBrand};
-                font-size: 13px;
+                font-size: 11.5px;
                 font-weight: 800;
                 display: flex; align-items: center; justify-content: center;
                 height: 100%;
@@ -357,7 +355,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
             .tag { background: #eff2f5; color: #5c6b7f; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 500; }
             .summary-box { flex: 1; position: relative; overflow: hidden; min-height: 0; margin-bottom: 16px; }
-            .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; }
+            .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; max-height: 142.8px; }
             .summary p { margin: 0 0 4px 0; text-indent: 2em; }
             .summary p:first-child { margin-top: 0; }
             .summary b, .summary strong { font-weight: bold; color: #455a64; }
