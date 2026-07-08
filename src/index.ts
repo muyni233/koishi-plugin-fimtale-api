@@ -23,6 +23,7 @@ export interface Config {
   debug: boolean
   enableFallback: boolean
   proxy?: string
+  cardStyle?: 'split' | 'overlay'
 }
 
 export const Config: Schema<Config> = Schema.object({
@@ -38,6 +39,10 @@ export const Config: Schema<Config> = Schema.object({
   debug: Schema.boolean().default(false).description('开启详细调试日志'),
   enableFallback: Schema.boolean().default(true).description('API失败时尝试直接爬取网页(降级策略)'),
   proxy: Schema.string().description('代理服务器地址 (例: http://127.0.0.1:7890)'),
+  cardStyle: Schema.union([
+    Schema.const('split').description('分栏式 (左图右字)'),
+    Schema.const('overlay').description('海报式 (全图背景蒙版叠字)'),
+  ]).default('split').description('预览卡片排版风格'),
 })
 
 export function apply(ctx: Context, config: Config) {

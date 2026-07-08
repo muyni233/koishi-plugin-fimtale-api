@@ -11,4 +11,5 @@ export interface Config {
     debug: boolean
     enableFallback: boolean
     proxy?: string
+    cardStyle?: 'split' | 'overlay'
 }

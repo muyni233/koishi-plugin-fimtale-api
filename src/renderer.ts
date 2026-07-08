@@ -87,91 +87,204 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
             ? `background: url('${base64Cover}') center/cover no-repeat, ${generateGradient(displayTitle)};`
             : `background: ${generateGradient(displayTitle)};`
 
-        const html = `<!DOCTYPE html><html><head><style>
-        body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
-        .card { width: 620px; min-height: 420px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; overflow: hidden; }
-        .cover { width: 220px; min-height: 100%; ${bgStyle} background-size: cover; background-position: center; position: relative; flex-shrink: 0; }
-        .id-badge-container {
-            position: absolute; top: 15px; left: 15px;
-            display: flex;
-            box-shadow: 0 4px 12px rgba(238,110,115, 0.3);
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.3);
-            height: 28px;
-        }
-        .id-label {
-            background: #EE6E73;
-            color: #fff;
-            padding: 0 10px;
-            font-size: 12px;
-            font-weight: bold;
-            font-family: sans-serif;
-            text-transform: uppercase;
-            display: flex; align-items: center; justify-content: center;
-            height: 100%;
-            line-height: 1; margin: 0;
-        }
-        .id-val {
-            background: #fff;
-            color: #EE6E73;
-            padding: 0 12px;
-            font-family: "Consolas", "Monaco", monospace;
-            font-size: 15px;
-            font-weight: 900;
-            display: flex; align-items: center; justify-content: center;
-            height: 100%;
-            line-height: 1; margin: 0;
-        }
-        .info { flex: 1; padding: 26px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .header-group { flex-shrink: 0; margin-bottom: 16px; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px; }
-        .title { font-size: 24px; font-weight: 700; color: #333; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
-        .subtitle { font-size: 16px; color: #78909C; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; border-left: 4px solid #EE6E73; margin-top: 6px; }
-        .author { font-size: 14px; color: #78909C; margin-top: 12px; font-weight: 400; display:flex; align-items:center; gap: 6px; }
-        .author-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-        .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
-        .tag { background: #eff2f5; color: #5c6b7f; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-        .summary-box { flex: 1; position: relative; overflow: hidden; min-height: 0; margin-bottom: 16px; }
-        .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; }
-        .summary p { margin: 0 0 4px 0; text-indent: 2em; }
-        .summary p:first-child { margin-top: 0; }
-        .summary b, .summary strong { font-weight: bold; color: #455a64; }
-        .summary i, .summary em { font-style: italic; }
-        .summary blockquote { margin: 4px 0; padding-left: 8px; border-left: 3px solid #ccc; color: #78909C; font-size: 13px; }
-        .summary blockquote p { text-indent: 0; }
-        .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; height: 100%; }
-        .album-grid img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-        .album-label { font-size: 12px; color: #78909C; margin-top: 6px; text-align: center; }
-        .footer { border-top: 1px solid #eee; padding-top: 14px; display: flex; justify-content: space-between; font-size: 13px; color: #78909C; margin-top: auto; flex-shrink: 0; }
-        .stat { display: flex; align-items: center; gap: 4px; }
-        .stat svg { width: 15px; height: 15px; }
-      </style></head><body>
-      <div class="card">
-        <div class="cover">
-            ${!base64Cover ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-size:110px;font-family:'Segoe UI', system-ui, sans-serif;font-weight:800;letter-spacing:-2px;user-select:none;text-shadow:0 4px 15px rgba(0,0,0,0.15);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : ''}
-            <div class="id-badge-container">
-                <div class="id-label">ID</div>
-                <div class="id-val">${info.ID}</div>
+        let html = ''
+        if (config.cardStyle === 'overlay') {
+            const cardBgStyle = base64Cover
+                ? `background: url('${base64Cover}') center/cover no-repeat;`
+                : `background: ${generateGradient(displayTitle)};`
+
+            html = `<!DOCTYPE html><html><head><style>
+            body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
+            .card { width: 620px; min-height: 440px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: height 0.3s ease; }
+            .mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.92) 100%); z-index: 1; pointer-events: none; }
+            .container { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 28px; box-sizing: border-box; flex: 1; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
+            #top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+            .id-badge { display: flex; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.25); height: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+            .id-label { background: #EE6E73; color: #fff; padding: 0 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; height: 100%; }
+            .id-val { color: #fff; padding: 0 12px; font-family: "Consolas", monospace; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; height: 100%; }
+            .info-block { display: flex; flex-direction: column; flex-grow: 1; justify-content: flex-end; margin-bottom: 12px; }
+            .title { font-size: 26px; font-weight: 800; line-height: 1.35; color: #ffffff; margin: 0 0 6px 0; text-shadow: 0 2px 12px rgba(0,0,0,0.6); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.3px; }
+            .subtitle { font-size: 16px; color: rgba(255, 255, 255, 0.85); font-weight: 500; margin: 4px 0 10px 0; padding-left: 12px; border-left: 4px solid #EE6E73; text-shadow: 0 1px 6px rgba(0,0,0,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9); }
+            .author-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.6); object-fit: cover; }
+            .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+            .tag-pill { background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(255,255,255,0.95); padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; text-shadow: none; }
+            .summary-box { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.82); text-align: left; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
+            .summary-box p { margin: 0; text-indent: 2em; }
+            .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+            .divider { height: 1px; background: rgba(255, 255, 255, 0.2); margin-bottom: 12px; }
+            .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
+            .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
+            .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+            </style></head><body>
+            <div class="card" style="${cardBgStyle}">
+                <div class="mask"></div>
+                <div class="container">
+                    <div id="top-row">
+                        ${!base64Cover ? `<div style="font-size: 56px; line-height: 1; font-family:'Segoe UI', system-ui, sans-serif; font-weight:800; color:rgba(255,255,255,0.75); text-shadow: 0 4px 10px rgba(0,0,0,0.2);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : '<div></div>'}
+                        <div class="id-badge">
+                            <div class="id-label">ID</div>
+                            <div class="id-val">${info.ID}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-block">
+                        <div class="title">${displayTitle}</div>
+                        ${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}
+                        <div class="author-row">
+                            ${base64Avatar ? `<img class="author-avatar" src="${base64Avatar}"/>` : ''}
+                            <span>@${info.UserName}</span>
+                        </div>
+                        <div class="tags-row">
+                            ${tagsArr.slice(0, 8).map(t => `<span class="tag-pill">${t}</span>`).join('')}
+                        </div>
+                        <div class="summary-box">
+                            ${isAlbum && hasImages ? `<div class="album-grid" style="height: 130px; margin-bottom: 6px;">${(base64AlbumImgs as string[]).map(src => `<img src="${src}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;"/>`).join('')}</div><div style="font-size:12px; color:rgba(255,255,255,0.7);">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="footer">
+                        <span class="stat" style="color:#a5d8ff">${ICONS.views}<span>${info.Views || 0}</span></span>
+                        <span class="stat" style="color:#d0bfff">${ICONS.comments}<span>${info.Comments || 0}</span></span>
+                        <span class="stat" style="color:#b2f2bb">${ICONS.likes}<span>${likes}</span></span>
+                        <span class="stat" style="color:#ffc9c9">${ICONS.followers}<span>${followers}</span></span>
+                        <span class="stat" style="color:#ffec99">${ICONS.hp}<span>${highPraise}</span></span>
+                        <span class="stat" style="color:#e9ecef">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
+                    </div>
+                </div>
+                ${base64Cover ? `<img id="raw-cover" src="${base64Cover}" style="display: none;" />` : ''}
             </div>
-        </div>
-        <div class="info">
-          <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">${base64Avatar ? `<img class="author-avatar" src="${base64Avatar}"/>` : ''}@${info.UserName}</div></div>
-          <div class="tags">${tagsArr.slice(0, 10).map(t => `<span class="tag">${t}</span>`).join('')}</div>
-          <div class="summary-box">${isAlbum && hasImages ? `<div class="album-grid">${(base64AlbumImgs as string[]).map(src => `<img src="${src}"/>`).join('')}</div><div class="album-label">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}</div>
-          <div class="footer">
-            <span class="stat" style="color:#6ea2d5">${ICONS.views}<span>${info.Views || 0}</span></span>
-            <span class="stat" style="color:#8b6bb5">${ICONS.comments}<span>${info.Comments || 0}</span></span>
-            <span class="stat" style="color:#72ae76">${ICONS.likes}<span>${likes}</span></span>
-            <span class="stat" style="color:#5c9ec8">${ICONS.followers}<span>${followers}</span></span>
-            <span class="stat" style="color:#d4a24d">${ICONS.hp}<span>${highPraise}</span></span>
-            <span class="stat" style="color:#8f7970">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
-          </div></div></div></body></html>`
+            </body></html>`
+        } else {
+            // Split style (original)
+            html = `<!DOCTYPE html><html><head><style>
+            body { margin: 0; padding: 0; font-family: ${fontStack}; background: transparent; }
+            .card { width: 620px; min-height: 420px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; overflow: hidden; }
+            .cover { width: 220px; min-height: 100%; ${bgStyle} background-size: cover; background-position: center; position: relative; flex-shrink: 0; }
+            .id-badge-container {
+                position: absolute; top: 15px; left: 15px;
+                display: flex;
+                box-shadow: 0 4px 12px rgba(238,110,115, 0.3);
+                border-radius: 6px;
+                overflow: hidden;
+                border: 1px solid rgba(255,255,255,0.3);
+                height: 28px;
+            }
+            .id-label {
+                background: #EE6E73;
+                color: #fff;
+                padding: 0 10px;
+                font-size: 12px;
+                font-weight: bold;
+                font-family: sans-serif;
+                text-transform: uppercase;
+                display: flex; align-items: center; justify-content: center;
+                height: 100%;
+                line-height: 1; margin: 0;
+            }
+            .id-val {
+                background: #fff;
+                color: #EE6E73;
+                padding: 0 12px;
+                font-family: "Consolas", "Monaco", monospace;
+                font-size: 15px;
+                font-weight: 900;
+                display: flex; align-items: center; justify-content: center;
+                height: 100%;
+                line-height: 1; margin: 0;
+            }
+            .info { flex: 1; padding: 26px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+            .header-group { flex-shrink: 0; margin-bottom: 16px; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px; }
+            .title { font-size: 24px; font-weight: 700; color: #333; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
+            .subtitle { font-size: 16px; color: #78909C; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; border-left: 4px solid #EE6E73; margin-top: 6px; }
+            .author { font-size: 14px; color: #78909C; margin-top: 12px; font-weight: 400; display:flex; align-items:center; gap: 6px; }
+            .author-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+            .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
+            .tag { background: #eff2f5; color: #5c6b7f; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+            .summary-box { flex: 1; position: relative; overflow: hidden; min-height: 0; margin-bottom: 16px; }
+            .summary { font-size: 14px; color: #546e7a; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; text-align: left; }
+            .summary p { margin: 0 0 4px 0; text-indent: 2em; }
+            .summary p:first-child { margin-top: 0; }
+            .summary b, .summary strong { font-weight: bold; color: #455a64; }
+            .summary i, .summary em { font-style: italic; }
+            .summary blockquote { margin: 4px 0; padding-left: 8px; border-left: 3px solid #ccc; color: #78909C; font-size: 13px; }
+            .summary blockquote p { text-indent: 0; }
+            .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; height: 100%; }
+            .album-grid img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+            .album-label { font-size: 12px; color: #78909C; margin-top: 6px; text-align: center; }
+            .footer { border-top: 1px solid #eee; padding-top: 14px; display: flex; justify-content: space-between; font-size: 13px; color: #78909C; margin-top: auto; flex-shrink: 0; }
+            .stat { display: flex; align-items: center; gap: 4px; }
+            .stat svg { width: 15px; height: 15px; }
+            </style></head><body>
+            <div class="card">
+                <div class="cover">
+                    ${!base64Cover ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-size:110px;font-family:'Segoe UI', system-ui, sans-serif;font-weight:800;letter-spacing:-2px;user-select:none;text-shadow:0 4px 15px rgba(0,0,0,0.15);">${(displayTitle.match(/[\w\u4e00-\u9fa5]/)?.[0] || displayTitle.charAt(0)).toUpperCase()}</div>` : ''}
+                    <div class="id-badge-container">
+                        <div class="id-label">ID</div>
+                        <div class="id-val">${info.ID}</div>
+                    </div>
+                </div>
+                <div class="info">
+                  <div class="header-group"><div class="title">${displayTitle}</div>${subTitle ? `<div class="subtitle">${subTitle}</div>` : ''}<div class="author">${base64Avatar ? `<img class="author-avatar" src="${base64Avatar}"/>` : ''}@${info.UserName}</div></div>
+                  <div class="tags">${tagsArr.slice(0, 10).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+                  <div class="summary-box">${isAlbum && hasImages ? `<div class="album-grid">${(base64AlbumImgs as string[]).map(src => `<img src="${src}"/>`).join('')}</div><div class="album-label">🖼️ 当前章节包含 ${currentImgs.length} 幅图</div>` : `<div class="summary">${summary}</div>`}</div>
+                  <div class="footer">
+                    <span class="stat" style="color:#6ea2d5">${ICONS.views}<span>${info.Views || 0}</span></span>
+                    <span class="stat" style="color:#8b6bb5">${ICONS.comments}<span>${info.Comments || 0}</span></span>
+                    <span class="stat" style="color:#72ae76">${ICONS.likes}<span>${likes}</span></span>
+                    <span class="stat" style="color:#5c9ec8">${ICONS.followers}<span>${followers}</span></span>
+                    <span class="stat" style="color:#d4a24d">${ICONS.hp}<span>${highPraise}</span></span>
+                    <span class="stat" style="color:#8f7970">${isAlbum ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>' : ICONS.words}<span>${isAlbum ? wordCount + ' P' : wordCount}</span></span>
+                  </div></div></div></body></html>`
+        }
 
         const page = await ctx.puppeteer.page()
         try {
             await injectCookies(page, config.cookies)
             await page.setContent(html)
-            await page.setViewport({ width: 660, height: 480, deviceScaleFactor: 3 })
+
+            if (config.cardStyle === 'overlay') {
+                await page.evaluate(async () => {
+                    await document.fonts.ready;
+                    const img = document.getElementById('raw-cover') as HTMLImageElement;
+                    
+                    const adjustLayout = (image: HTMLImageElement) => {
+                        const ratio = image.naturalWidth / image.naturalHeight;
+                        const card = document.querySelector('.card') as HTMLElement;
+                        if (!card) return;
+                        if (ratio > 1.25) {
+                            card.classList.add('ratio-landscape');
+                            card.style.height = '375px';
+                        } else if (ratio < 0.8) {
+                            card.classList.add('ratio-portrait');
+                            card.style.height = '515px';
+                        } else {
+                            card.classList.add('ratio-square');
+                            card.style.height = '445px';
+                        }
+                    };
+
+                    if (img) {
+                        if (img.complete) {
+                            adjustLayout(img);
+                        } else {
+                            await new Promise((resolve) => {
+                                img.onload = () => {
+                                    adjustLayout(img);
+                                    resolve(true);
+                                };
+                                img.onerror = () => resolve(true);
+                                setTimeout(resolve, 2000);
+                            });
+                        }
+                    }
+                });
+            }
+
+            const viewportHeight = config.cardStyle === 'overlay' ? 680 : 480;
+            await page.setViewport({ width: 660, height: viewportHeight, deviceScaleFactor: 3 })
             const img = await page.$('.card').then(e => e.screenshot({ type: 'jpeg', quality: 100 }))
             return img
         } finally {
