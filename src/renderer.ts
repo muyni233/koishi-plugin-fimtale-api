@@ -127,16 +127,14 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .card.landscape-cover { height: auto !important; min-height: unset !important; background: ${darkBgColor} !important; gap: 0; }
                 .card.landscape-cover .cover-image-wrapper { position: relative; width: 620px; height: auto; aspect-ratio: var(--cover-ratio); z-index: 0; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); }
                 .card.landscape-cover .cover-image { width: 100%; height: 100%; object-fit: cover; }
-                .card.landscape-cover .container { padding: 24px 32px 28px 32px; background: transparent !important; }
-                .card.landscape-cover .info-wrapper { background: transparent !important; padding: 0 !important; }
-                .card.landscape-cover .top-mask, .card.landscape-cover .mask { display: none; }
+                .card.landscape-cover .info-wrapper { background: transparent !important; padding: 36px 32px 28px 32px !important; }
+                .card.landscape-cover .mask { display: none; }
                 .cover-image-wrapper { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
                 .cover-image { width: 100%; height: 100%; object-fit: cover; }
-                .top-mask { position: absolute; top: 0; left: 0; right: 0; height: 80px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0) 100%); }
-                .mask { position: absolute; bottom: 0; left: 0; right: 0; height: 380px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.08) 30%, rgba(0,0,0,0.22) 48%, rgba(0,0,0,0.42) 68%, rgba(0,0,0,0.65) 85%, rgba(0,0,0,0.8) 100%); }
+                .mask { position: absolute; top: 0; left: 0; right: 0; height: 80px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0) 100%); }
                 .noise { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.04; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px 128px; }
                 .container { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; flex: 1; color: #fff; }
-                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 0 32px 28px 32px; box-sizing: border-box; }
+                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 36px 32px 28px 32px; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.08) 30%, rgba(0,0,0,0.22) 48%, rgba(0,0,0,0.42) 68%, rgba(0,0,0,0.65) 85%, rgba(0,0,0,0.8) 100%); }
                 #top-row { position: absolute; top: 28px; left: 32px; right: 32px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
                 .brand-wrap { display: flex; align-items: center; gap: 8px; }
                 .logo { width: 34px; height: 34px; object-fit: contain; margin-left: -3px; }
@@ -159,7 +157,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
-                .footer-wrap { background: rgba(0,0,0,0.35); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
                 .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
                 .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
@@ -167,11 +165,10 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .corner-tl { top: 16px; left: 20px; border-top: 1.5px solid rgba(255,255,255,0.12); border-left: 1.5px solid rgba(255,255,255,0.12); }
                 .corner-br { bottom: 16px; right: 20px; border-bottom: 1.5px solid rgba(255,255,255,0.12); border-right: 1.5px solid rgba(255,255,255,0.12); }
                 </style></head><body>
-                <div class="card" style="--cover-url: url('${base64Cover}'); ${cardBgStyle}">
+                <div class="card" style="${cardBgStyle}">
                     <div class="corner-tl"></div>
                     <div class="corner-br"></div>
                     <div class="cover-image-wrapper"><img class="cover-image" src="${base64Cover}" /></div>
-                    <div class="top-mask"></div>
                     <div class="mask"></div>
                     <div class="noise"></div>
                     <div id="top-row">
