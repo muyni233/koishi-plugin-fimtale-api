@@ -41,7 +41,7 @@ export const Config: Schema<Config> = Schema.object({
   proxy: Schema.string().description('代理服务器地址 (例: http://127.0.0.1:7890)'),
   cardStyle: Schema.union([
     Schema.const('split').description('分栏式 (左图右字)'),
-    Schema.const('overlay').description('海报式 (全图背景蒙版叠字)'),
+    Schema.const('overlay').description('海报式 (全图背景蒙版叠字，无封面时自动使用分栏式)'),
   ]).default('split').description('预览卡片排版风格'),
 })
 
