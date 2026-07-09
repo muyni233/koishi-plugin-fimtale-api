@@ -129,13 +129,14 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .card.landscape-cover .cover-image { width: 100%; height: 100%; object-fit: cover; }
                 .card.landscape-cover .container { padding: 24px 32px 28px 32px; background: transparent !important; }
                 .card.landscape-cover .info-wrapper { background: transparent !important; padding: 0 !important; }
+                .card.landscape-cover .top-mask, .card.landscape-cover .mask { display: none; }
                 .cover-image-wrapper { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
                 .cover-image { width: 100%; height: 100%; object-fit: cover; }
-                .mask { position: absolute; top: 0; left: 0; right: 0; height: 80px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0) 100%); }
-                .card.landscape-cover .mask { display: none; }
+                .top-mask { position: absolute; top: 0; left: 0; right: 0; height: 80px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0) 100%); }
+                .mask { position: absolute; bottom: 0; left: 0; right: 0; height: 380px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.08) 30%, rgba(0,0,0,0.22) 48%, rgba(0,0,0,0.42) 68%, rgba(0,0,0,0.65) 85%, rgba(0,0,0,0.8) 100%); }
                 .noise { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.04; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px 128px; }
                 .container { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; flex: 1; color: #fff; }
-                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 36px 32px 28px 32px; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 15%, rgba(0,0,0,0.08) 30%, rgba(0,0,0,0.22) 48%, rgba(0,0,0,0.42) 68%, rgba(0,0,0,0.65) 85%, rgba(0,0,0,0.8) 100%); }
+                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 0 32px 28px 32px; box-sizing: border-box; }
                 #top-row { position: absolute; top: 28px; left: 32px; right: 32px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
                 .brand-wrap { display: flex; align-items: center; gap: 8px; }
                 .logo { width: 34px; height: 34px; object-fit: contain; margin-left: -3px; }
@@ -170,6 +171,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                     <div class="corner-tl"></div>
                     <div class="corner-br"></div>
                     <div class="cover-image-wrapper"><img class="cover-image" src="${base64Cover}" /></div>
+                    <div class="top-mask"></div>
                     <div class="mask"></div>
                     <div class="noise"></div>
                     <div id="top-row">
