@@ -159,7 +159,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
-                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+                .footer-wrap { background: rgba(0,0,0,0.35); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
                 .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
                 .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
