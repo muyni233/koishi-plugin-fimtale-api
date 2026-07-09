@@ -135,7 +135,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .card.landscape-cover .mask { display: none; }
                 .noise { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.04; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px 128px; }
                 .container { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; flex: 1; color: #fff; }
-                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 60px 32px 28px 32px; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%); }
+                .info-wrapper { display: flex; flex-direction: column; width: 100%; padding: 40px 32px 28px 32px; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 25%, rgba(0,0,0,0.24) 48%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.72) 90%, rgba(0,0,0,0.85) 100%); }
                 #top-row { position: absolute; top: 28px; left: 32px; right: 32px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
                 .brand-wrap { display: flex; align-items: center; gap: 8px; }
                 .logo { width: 34px; height: 34px; object-fit: contain; margin-left: -3px; }
@@ -158,7 +158,7 @@ export function createRenderer(ctx: Context, config: Config, logger: Logger, deb
                 .summary-box p { margin: 0; text-indent: 2em; }
                 .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
                 .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2) 15%, rgba(255,255,255,0.2) 85%, transparent); margin-bottom: 14px; }
-                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+                .footer-wrap { background: rgba(0,0,0,0.12); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border-radius: 12px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
                 .footer { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.8); }
                 .stat { display: flex; align-items: center; gap: 4px; font-weight: 600; }
                 .stat svg { width: 16px; height: 16px; fill: currentColor; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
